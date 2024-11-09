@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# using GLNS
+import Pkg
+# include(expanduser("~/GLNS_fork.jl"))
+Pkg.activate(expanduser("~/GLNS_fork.jl"))
 using GLNS
 
 """

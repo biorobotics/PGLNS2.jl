@@ -26,6 +26,7 @@ Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
 function solver(problem_instance; args...)
+  println("This is a fork of GLNS")
   Random.seed!(1234)
 
 	###### Read problem data and solver settings ########
