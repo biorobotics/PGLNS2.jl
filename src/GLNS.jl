@@ -26,6 +26,8 @@ Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
 function solver(problem_instance; args...)
+  Random.seed!(1234)
+
 	###### Read problem data and solver settings ########
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
