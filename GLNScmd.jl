@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# using GLNS
+using Sockets
 import Pkg
 Pkg.activate(expanduser("~/GLNS_lazy_edge_eval.jl"))
 using GLNS
@@ -79,16 +79,26 @@ function parse_cmd(ARGS)
 			error("argument ", arg, " not in proper format")
 		end
 	end
-	if !isfile(filename)
-		println("the problem instance  ", filename, " does not exist")
-		exit(0)
-	end
 	return filename, optional_args
 end
 
-
-# running the code on the problem instance passed in via command line args.
 problem_instance, optional_args = parse_cmd(ARGS)
-GLNS.solver(problem_instance; optional_args...)
 
+PORT = 65431  # Port to connect to (non-privileged ports are > 1023)
+client_socket = connect(PORT)
+write(client_socket, "ready")
+terminate = false
 
+while true
+  msg = readline(client_socket)
+  if msg == "terminate"
+    break
+  end
+	if !isfile(problem_instance)
+		println("the problem instance  ", problem_instance, " does not exist")
+		exit(0)
+	end
+  optional_args[Symbol("max_time")] = parse(Float64, msg)
+  GLNS.solver(problem_instance, client_socket; optional_args...)
+  write(client_socket, "solved")
+end

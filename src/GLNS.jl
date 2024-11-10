@@ -22,13 +22,11 @@ include("adaptive_powers.jl")
 include("insertion_deletion.jl")
 include("parameter_defaults.jl")
 
-PORT = 65431  # Port to connect to (non-privileged ports are > 1023)
-
 """
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance; args...)
+function solver(problem_instance, client_socket; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -38,7 +36,6 @@ function solver(problem_instance; args...)
 	#####################################################
 	init_time = time()
 
-  client_socket = connect(PORT)
   confirmed_dist = zeros(Bool, size(dist, 1), size(dist, 2))
 
 	count = Dict(:latest_improvement => 1,
