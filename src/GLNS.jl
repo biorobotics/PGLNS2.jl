@@ -22,7 +22,7 @@ include("adaptive_powers.jl")
 include("insertion_deletion.jl")
 include("parameter_defaults.jl")
 
-PORT = 65432  # Port to connect to (non-privileged ports are > 1023)
+PORT = 65431  # Port to connect to (non-privileged ports are > 1023)
 
 """
 Main GTSP solver, which takes as input a problem instance and
