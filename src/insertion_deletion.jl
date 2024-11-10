@@ -233,7 +233,7 @@ end
 
 """build tour from scratch on a cold restart"""
 function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
-						setdist::Distsv, trial_num::Int64, param::Dict{Symbol,Any})
+						setdist::Distsv, trial_num::Int64, param::Dict{Symbol,Any}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, num_sets::Int, member::Array{Int64,1})
 	sets_to_insert = collect(1:param[:num_sets])
 	best = Tour(Int64[], typemax(Int64))
 
@@ -244,7 +244,7 @@ function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
 	else
 		random_insertion!(best.tour, sets_to_insert, dist, sets, setdist)
 	end
-	best.cost = tour_cost(best.tour, dist)
+  eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, member)
 	lowest.cost > best.cost && (lowest = best)
 	return best
 end

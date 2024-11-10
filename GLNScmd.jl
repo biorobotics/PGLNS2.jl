@@ -16,8 +16,7 @@
 
 # using GLNS
 import Pkg
-# include(expanduser("~/GLNS_fork.jl"))
-Pkg.activate(expanduser("~/GLNS_fork.jl"))
+Pkg.activate(expanduser("~/GLNS_lazy_edge_eval.jl"))
 using GLNS
 
 """

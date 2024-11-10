@@ -172,6 +172,35 @@ end
 ###################################################
 ################ Tour checks ######################
 
+@inline function eval_edges!(tour::Tour, dist::Array{Int64,2}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, setdist::Distsv, num_sets::Int, member::Array{Int64,1})
+    # Get unevaluated edges
+    msg = ""
+    unevaluated_edges = Array{Tuple{Int, Int}}(undef, 0)
+    for (edge_idx, (node_idx1, node_idx2)) in enumerate(zip(tour.tour, circshift(tour.tour, -1)))
+      if ~confirmed_dist[node_idx1, node_idx2]
+        msg = msg * string(node_idx1) * " " * string(node_idx2) * ","
+        push!(unevaluated_edges, (node_idx1, node_idx2))
+      end
+    end
+    if length(msg) == 0
+      return
+    end
+
+    # Remove trailing comma
+    msg = msg[1:end - 1]
+
+    write(client_socket, msg)
+    updated_dists = [parse(Float64, updated_dist) for updated_dist in split(readline(client_socket), ' ')]
+    @assert(length(updated_dists) == length(unevaluated_edges))
+    for (updated_dist, (node_idx1, node_idx2)) in zip(updated_dists, unevaluated_edges)
+      confirmed_dist[node_idx1, node_idx2] = true
+      dist[node_idx1, node_idx2] = updated_dist
+    end
+    tour.cost = tour_cost(tour.tour, dist)
+
+    setdist = set_vertex_dist(dist, num_sets, member) # TODO: only update the setdists corresponding to updated edges
+end
+
 """  Compute the length of a tour  """
 @inline function tour_cost(tour::Array{Int64,1}, dist::Array{Int64,2})
     tour_length = dist[tour[end], tour[1]]
