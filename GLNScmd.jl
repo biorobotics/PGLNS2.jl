@@ -84,21 +84,25 @@ end
 
 problem_instance, optional_args = parse_cmd(ARGS)
 
-PORT = 65431  # Port to connect to (non-privileged ports are > 1023)
+PORT = 65433  # Port to connect to (non-privileged ports are > 1023)
 client_socket = connect(PORT)
 write(client_socket, "ready")
 terminate = false
 
-while true
-  msg = readline(client_socket)
-  if msg == "terminate"
-    break
+try
+  while true
+    msg = readline(client_socket)
+    if msg == "terminate"
+      break
+    end
+    if !isfile(problem_instance)
+      println("the problem instance  ", problem_instance, " does not exist")
+      exit(0)
+    end
+    optional_args[Symbol("max_time")] = parse(Float64, msg)
+    GLNS.solver(problem_instance, client_socket; optional_args...)
+    write(client_socket, "solved")
   end
-	if !isfile(problem_instance)
-		println("the problem instance  ", problem_instance, " does not exist")
-		exit(0)
-	end
-  optional_args[Symbol("max_time")] = parse(Float64, msg)
-  GLNS.solver(problem_instance, client_socket; optional_args...)
-  write(client_socket, "solved")
+finally
+  close(client_socket)
 end
