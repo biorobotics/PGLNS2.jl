@@ -121,6 +121,9 @@ function parameter_settings(num_vertices, num_sets, sets, problem_instance, args
 	param[:adaptive_iter] = 1
 	param[:print_time] = 5
 	param[:budget] = get(args, :budget, typemin(Int64))
+	param[:socket_port] = get(args, :socket_port, 65432)
+	param[:lazy_edge_eval] = get(args, :lazy_edge_eval, 1)
+	param[:initial_tour_file] = get(args, :initial_tour_file, 65432)
 	param[:timeout] = false
 	param[:budget_met] = false
 	param[:min_set] = min_set(sets)

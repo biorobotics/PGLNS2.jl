@@ -239,12 +239,23 @@ function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
 
 	# compute random initial tour only if past first trial
 	# in this case, randomly choose between random and insertion tour.
-	if param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
+  if param[:initial_tour_file] != "None"
+	  if !isfile(initial_tour_file)
+      error("the initial tour file  ", filename, " does not exist")
+	  end
+
+    s = open(filename, "r")
+    best.tour = [parse(Int64, si) for si in split(s, " ")]
+	elseif param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
 		random_initial_tour!(best.tour, sets_to_insert, dist, sets)
 	else
 		random_insertion!(best.tour, sets_to_insert, dist, sets, setdist)
 	end
-  eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, member)
+  if param[:lazy_edge_eval]
+    eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, member)
+  else
+    best.cost = tour_cost(best.tour, dist)
+  end
 	lowest.cost > best.cost && (lowest = best)
 	return best
 end

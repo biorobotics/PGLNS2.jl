@@ -33,6 +33,9 @@ function solver(problem_instance, client_socket; args...)
 	###### Read problem data and solver settings ########
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
+  if param[:initial_tour_file] != "None"
+    param[:cold_trials] = 1
+  end
 	#####################################################
 	init_time = time()
 
@@ -82,7 +85,9 @@ function solver(problem_instance, client_socket; args...)
 				end
 				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
 
-        eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+        if param[:lazy_edge_eval]
+          eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+        end
 
         # decide whether or not to accept trial
 				if accepttrial_noparam(trial.cost, current.cost, param[:prob_accept]) ||
@@ -98,7 +103,9 @@ function solver(problem_instance, client_socket; args...)
 					end
 					best = current
 					opt_cycle!(best, dist, sets, membership, param, setdist, "full")
-          eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+          if param[:lazy_edge_eval]
+            eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+          end
 	      else
 					count[:latest_improvement] += 1
 				end

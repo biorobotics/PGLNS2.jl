@@ -196,9 +196,10 @@ end
       confirmed_dist[node_idx1, node_idx2] = true
       dist[node_idx1, node_idx2] = updated_dist
     end
-    tour.cost = tour_cost(tour.tour, dist)
 
     setdist = set_vertex_dist(dist, num_sets, member) # TODO: only update the setdists corresponding to updated edges
+
+    tour.cost = tour_cost(tour.tour, dist)
 end
 
 """  Compute the length of a tour  """

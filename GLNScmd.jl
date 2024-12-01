@@ -29,6 +29,8 @@ Optional Flags -- values are given in square brackets []
 	-output=[filename]           (default is output.tour)
 	-epsilon=[Float in [0,1]]	 (default is 0.5)
 	-reopt=[Float in [0,1]]      (default is set by mode)
+	-socket_port=[Int>1023]      (default is 65432)
+	-lazy_edge_eval=[Int in [0,1]]      (default is 1)
 """
 function parse_cmd(ARGS)
 	if isempty(ARGS)
@@ -49,11 +51,14 @@ function parse_cmd(ARGS)
 		println("-epsilon=[Float in [0,1]]        (default is 0.5)")
 		println("-reopt=[Float in [0,1]]          (default is 1.0)")
 		println("-budget=[Int]                    (default has no budget)")
+		println("-socket_port=[Int]               (default is 65432)")
+		println("-lazy_edge_eval=[Int]            (default is 1)")
+		println("-initial_tour_file=[filename]    (default is None)")
 		exit(0)
 	end
-	int_flags = ["-max_time", "-trials", "-restarts", "-verbose", "-budget", "-num_iterations"]
+	int_flags = ["-max_time", "-trials", "-restarts", "-verbose", "-budget", "-num_iterations", "-socket_port", "-lazy_edge_eval"]
 	float_flags = ["-epsilon", "-reopt"]
-	string_flags = ["-mode", "-output", "-noise", "-devel"]
+	string_flags = ["-mode", "-output", "-noise", "-devel", "-initial_tour_file"]
 	filename = ""
 	optional_args = Dict{Symbol, Any}()
 	for arg in ARGS
@@ -84,13 +89,24 @@ end
 
 problem_instance, optional_args = parse_cmd(ARGS)
 
-PORT = 65433  # Port to connect to (non-privileged ports are > 1023)
-client_socket = connect(PORT)
-write(client_socket, "ready")
-terminate = false
+if haskey(optional_args, "socket_port")
+  PORT = parse(Int64, optional_args[Symbol("socket_port")])
+else
+  PORT = 65432
+end
+
+if haskey(optional_args, "initial_tour_file")
+  initial_tour_file = parse(Int64, optional_args[Symbol("initial_tour_file")])
+else
+  initial_tour_file = None
+end
+
+server = listen(PORT)
 
 try
   while true
+    client_socket = accept(server)
+    write(client_socket, "ready")
     msg = readline(client_socket)
     if msg == "terminate"
       break
@@ -104,5 +120,5 @@ try
     write(client_socket, "solved")
   end
 finally
-  close(client_socket)
+  close(server)
 end
