@@ -534,6 +534,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 			write(s, "Solver Time      : ", string(round(timer, digits=3)), " sec\n")
 			write(s, "Tour Cost        : ", string(lowest.cost), "\n")
 			write(s, "Tour             : ", string(lowest.tour), "\n")
+			write(s, "Tour History     :\n")
       for tour in tour_history
         write(s, string(tour), "\n")
       end

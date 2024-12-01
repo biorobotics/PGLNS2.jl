@@ -121,7 +121,7 @@ function solver(problem_instance, client_socket, given_initial_tour; args...)
 					lowest.cost > best.cost && (lowest = best)
           push!(tour_history, (round(timer, digits=3), lowest.tour, lowest.cost))
 					print_best(count, param, best, lowest, init_time)
-					print_summary(lowest, timer, membership, param)
+					print_summary(lowest, timer, membership, param, tour_history)
 					return
 				end
 
@@ -132,6 +132,8 @@ function solver(problem_instance, client_socket, given_initial_tour; args...)
         if length(tour_history) == 0 || (best.cost < tour_history[end][3])
           timer = (time_ns() - start_time)/1.0e9
           push!(tour_history, (round(timer, digits=3), best.tour, best.cost))
+          # println("Printing tour history")
+          # println(tour_history)
         end
 
 				print_best(count, param, best, lowest, init_time)
