@@ -53,12 +53,12 @@ function parse_cmd(ARGS)
 		println("-budget=[Int]                    (default has no budget)")
 		println("-socket_port=[Int]               (default is 65432)")
 		println("-lazy_edge_eval=[Int]            (default is 1)")
-		println("-initial_tour_file=[filename]    (default is None)")
+		println("-new_socket_each_instance=[filename]    (default is 0)")
 		exit(0)
 	end
-	int_flags = ["-max_time", "-trials", "-restarts", "-verbose", "-budget", "-num_iterations", "-socket_port", "-lazy_edge_eval"]
+	int_flags = ["-max_time", "-trials", "-restarts", "-verbose", "-budget", "-num_iterations", "-socket_port", "-lazy_edge_eval", "-new_socket_each_instance"]
 	float_flags = ["-epsilon", "-reopt"]
-	string_flags = ["-mode", "-output", "-noise", "-devel", "-initial_tour_file"]
+	string_flags = ["-mode", "-output", "-noise", "-devel"]
 	filename = ""
 	optional_args = Dict{Symbol, Any}()
 	for arg in ARGS
@@ -95,30 +95,38 @@ else
   PORT = 65432
 end
 
-if haskey(optional_args, "initial_tour_file")
-  initial_tour_file = parse(Int64, optional_args[Symbol("initial_tour_file")])
-else
-  initial_tour_file = None
-end
-
 server = listen(PORT)
 
+client_socket = accept(server)
+
 try
+  iter_count = 0
   while true
-    client_socket = accept(server)
-    write(client_socket, "ready")
+    if iter_count != 0 && haskey(optional_args, "new_socket_each_instance") && optional_args[Symbol("new_socket_each_instance")] == "1"
+      global client_socket = accept(server)
+    end
     msg = readline(client_socket)
     if msg == "terminate"
+      println("Server received termination signal")
       break
     end
+    println("_______________________________________Got msg_________________________________________")
+    println(msg)
     if !isfile(problem_instance)
       println("the problem instance  ", problem_instance, " does not exist")
       exit(0)
     end
-    optional_args[Symbol("max_time")] = parse(Float64, msg)
-    GLNS.solver(problem_instance, client_socket; optional_args...)
+    msg_split = split(msg, " ")
+    optional_args[Symbol("max_time")] = parse(Float64, msg_split[1])
+    given_initial_tour = Vector{Int64}()
+    for node_idx_str in msg_split[2:end]
+      push!(given_initial_tour, parse(Int64, node_idx_str))
+    end
+    GLNS.solver(problem_instance, client_socket, given_initial_tour; optional_args...)
     write(client_socket, "solved")
+    iter_count += 1
   end
 finally
   close(server)
+  println("Closed server")
 end

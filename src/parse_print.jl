@@ -506,7 +506,7 @@ end
 
 """print tour summary at end of execution"""
 function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
-						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1}))
+						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1})
 	if param[:print_output] == 3 && !param[:timeout] && !param[:budget_met]
 		progress_bar(param[:cold_trials], 1.0, lowest.cost, round(timer, digits=1))
 	end

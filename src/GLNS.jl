@@ -26,14 +26,14 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance, client_socket; args...)
+function solver(problem_instance, client_socket, given_initial_tour; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
 	###### Read problem data and solver settings ########
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
-  if param[:initial_tour_file] != "None"
+  if length(given_initial_tour) != 0
     param[:cold_trials] = 1
   end
 	#####################################################
@@ -57,7 +57,7 @@ function solver(problem_instance, client_socket; args...)
 
 	while count[:cold_trial] <= param[:cold_trials]
 		# build tour from scratch on a cold restart
-  	best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership)
+  	best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership, given_initial_tour)
     timer = (time_ns() - start_time)/1.0e9
 		# print_cold_trial(count, param, best)
 		phase = :early
@@ -88,7 +88,7 @@ function solver(problem_instance, client_socket; args...)
 				end
 				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
 
-        if param[:lazy_edge_eval]
+        if param[:lazy_edge_eval] == 1
           eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
         end
 
@@ -106,7 +106,7 @@ function solver(problem_instance, client_socket; args...)
 					end
 					best = current
 					opt_cycle!(best, dist, sets, membership, param, setdist, "full")
-          if param[:lazy_edge_eval]
+          if param[:lazy_edge_eval] == 1
             eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
           end
 	      else

@@ -233,25 +233,23 @@ end
 
 """build tour from scratch on a cold restart"""
 function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
-						setdist::Distsv, trial_num::Int64, param::Dict{Symbol,Any}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, num_sets::Int, member::Array{Int64,1})
+						setdist::Distsv, trial_num::Int64, param::Dict{Symbol,Any}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, num_sets::Int, member::Array{Int64,1}, given_initial_tour::Vector{Int64})
 	sets_to_insert = collect(1:param[:num_sets])
 	best = Tour(Int64[], typemax(Int64))
 
-	# compute random initial tour only if past first trial
-	# in this case, randomly choose between random and insertion tour.
-  if param[:initial_tour_file] != "None"
-	  if !isfile(initial_tour_file)
-      error("the initial tour file  ", filename, " does not exist")
-	  end
-
-    s = open(filename, "r")
-    best.tour = [parse(Int64, si) for si in split(s, " ")]
+  if length(given_initial_tour) != 0
+    println("Initializing from given tour")
+    println(given_initial_tour)
+    for node_idx in given_initial_tour
+      push!(best.tour, node_idx)
+    end
+    println("Initialized from given tour")
 	elseif param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
 		random_initial_tour!(best.tour, sets_to_insert, dist, sets)
 	else
 		random_insertion!(best.tour, sets_to_insert, dist, sets, setdist)
 	end
-  if param[:lazy_edge_eval]
+  if param[:lazy_edge_eval] == 1
     eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, member)
   else
     best.cost = tour_cost(best.tour, dist)
