@@ -18,6 +18,7 @@ using Sockets
 import Pkg
 Pkg.activate(expanduser("~/GLNS_lazy_edge_eval.jl"))
 using GLNS
+using Printf
 
 """
 Optional Flags -- values are given in square brackets []  
@@ -89,12 +90,13 @@ end
 
 problem_instance, optional_args = parse_cmd(ARGS)
 
-if haskey(optional_args, "socket_port")
-  PORT = parse(Int64, optional_args[Symbol("socket_port")])
+if haskey(optional_args, Symbol("socket_port"))
+  PORT = optional_args[Symbol("socket_port")]
 else
   PORT = 65432
 end
 
+@printf("Server listening on port %d\n", PORT)
 server = listen(PORT)
 
 client_socket = accept(server)
@@ -102,16 +104,18 @@ client_socket = accept(server)
 try
   iter_count = 0
   while true
-    if iter_count != 0 && haskey(optional_args, "new_socket_each_instance") && optional_args[Symbol("new_socket_each_instance")] == "1"
+    if iter_count != 0 && haskey(optional_args, Symbol("new_socket_each_instance")) && optional_args[Symbol("new_socket_each_instance")] == 1
       global client_socket = accept(server)
     end
     msg = readline(client_socket)
     if msg == "terminate"
-      println("Server received termination signal")
+      @printf("Server on port %d received termination signal", PORT)
       break
     end
-    println("_______________________________________Got msg_________________________________________")
-    println(msg)
+    if length(msg) == 0
+      iter_count += 1
+      continue # Assume a client just closed its connection
+    end
     if !isfile(problem_instance)
       println("the problem instance  ", problem_instance, " does not exist")
       exit(0)
@@ -128,5 +132,5 @@ try
   end
 finally
   close(server)
-  println("Closed server")
+  @printf("Closed server on port %d\n", PORT)
 end
