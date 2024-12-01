@@ -53,9 +53,12 @@ function solver(problem_instance, client_socket; args...)
 	setdist = set_vertex_dist(dist, num_sets, membership)
 	powers = initialize_powers(param)
 
+  tour_history = Array{Tuple{Float64, Array{Int64,1}, Int64},1}()
+
 	while count[:cold_trial] <= param[:cold_trials]
 		# build tour from scratch on a cold restart
   	best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership)
+    timer = (time_ns() - start_time)/1.0e9
 		# print_cold_trial(count, param, best)
 		phase = :early
 
@@ -116,6 +119,7 @@ function solver(problem_instance, client_socket; args...)
 					param[:budget_met] = (best.cost <= param[:budget])
 					timer = (time_ns() - start_time)/1.0e9
 					lowest.cost > best.cost && (lowest = best)
+          push!(tour_history, (round(timer, digits=3), lowest.tour, lowest.cost))
 					print_best(count, param, best, lowest, init_time)
 					print_summary(lowest, timer, membership, param)
 					return
@@ -124,6 +128,12 @@ function solver(problem_instance, client_socket; args...)
 		    temperature *= cooling_rate  # cool the temperature
 				iter_count += 1
 				count[:total_iter] += 1
+
+        if length(tour_history) == 0 || (best.cost < tour_history[end][3])
+          timer = (time_ns() - start_time)/1.0e9
+          push!(tour_history, (round(timer, digits=3), best.tour, best.cost))
+        end
+
 				print_best(count, param, best, lowest, init_time)
 			end
 			print_warm_trial(count, param, best, iter_count)
@@ -140,6 +150,7 @@ function solver(problem_instance, client_socket; args...)
 
 	end
 	timer = (time_ns() - start_time)/1.0e9
-	print_summary(lowest, timer, membership, param)
+  push!(tour_history, (round(timer, digits=3), lowest.tour, lowest.cost))
+  print_summary(lowest, timer, membership, param, tour_history)
 end
 end
