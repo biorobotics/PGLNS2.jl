@@ -36,11 +36,16 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
 	read_start_time = time_ns()
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
 	read_end_time = time_ns()
-  @printf("Reading file took %f s", (read_end_time - read_start_time)/1.0e9)
+  instance_read_time = (read_end_time - read_start_time)/1.0e9
+  @printf("Reading GTSPLIB file took %f s", instance_read_time)
 
   # Read cost matrix from npy file
+	read_start_time = time_ns()
   npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
   dist = npzread(npyfile)
+	read_end_time = time_ns()
+  cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
+  @printf("Reading cost mat file took %f s", cost_mat_read_time)
 
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
   if length(given_initial_tour) != 0
@@ -131,7 +136,7 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
 					lowest.cost > best.cost && (lowest = best)
           push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
 					print_best(count, param, best, lowest, init_time)
-					print_summary(lowest, timer, membership, param, tour_history)
+					print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time)
 					return
 				end
 
@@ -163,6 +168,6 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
 	end
 	timer = (time_ns() - start_time)/1.0e9
   push!(tour_history, (round(time_ns() - start_time_for_tour_history), lowest.tour, lowest.cost))
-  print_summary(lowest, timer, membership, param, tour_history)
+  print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time)
 end
 end
