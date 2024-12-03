@@ -100,7 +100,12 @@ end
 GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(); optional_args...)
 
 @printf("Server attempting to listen on port %d\n", PORT)
-server = listen(PORT)
+try
+  global server = listen(PORT)
+catch e
+  @printf("Server on port %d failed to listen\n", PORT)
+  exit()
+end
 @printf("Server listening on port %d\n", PORT)
 
 client_socket = accept(server)
@@ -123,7 +128,7 @@ try
     end
     if !isfile(problem_instance)
       println("the problem instance  ", problem_instance, " does not exist")
-      exit(0)
+      break
     end
     msg_split = split(msg, " ")
     optional_args[Symbol("max_time")] = parse(Float64, msg_split[1])

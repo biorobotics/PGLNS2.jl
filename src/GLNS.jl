@@ -15,6 +15,7 @@ module GLNS
 export solver
 using Random
 using Sockets
+using Printf
 include("utilities.jl")
 include("parse_print.jl")
 include("tour_optimizations.jl")
@@ -31,7 +32,10 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
   Random.seed!(1234)
 
 	###### Read problem data and solver settings ########
+	read_start_time = time_ns()
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+	read_end_time = time_ns()
+  @printf("Reading file took %f s", (read_end_time - read_start_time)/1.0e9)
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
   if length(given_initial_tour) != 0
     param[:cold_trials] = 1
