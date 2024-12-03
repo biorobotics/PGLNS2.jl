@@ -167,7 +167,7 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
 
 	end
 	timer = (time_ns() - start_time)/1.0e9
-  push!(tour_history, (round(time_ns() - start_time_for_tour_history), lowest.tour, lowest.cost))
+  push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
   print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time)
 end
 end
