@@ -26,7 +26,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance, client_socket, given_initial_tour; args...)
+function solver(problem_instance, client_socket, given_initial_tour, start_time_for_tour_history; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -119,7 +119,7 @@ function solver(problem_instance, client_socket, given_initial_tour; args...)
 					param[:budget_met] = (best.cost <= param[:budget])
 					timer = (time_ns() - start_time)/1.0e9
 					lowest.cost > best.cost && (lowest = best)
-          push!(tour_history, (round(timer, digits=3), lowest.tour, lowest.cost))
+          push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
 					print_best(count, param, best, lowest, init_time)
 					print_summary(lowest, timer, membership, param, tour_history)
 					return
@@ -131,7 +131,7 @@ function solver(problem_instance, client_socket, given_initial_tour; args...)
 
         if length(tour_history) == 0 || (best.cost < tour_history[end][3])
           timer = (time_ns() - start_time)/1.0e9
-          push!(tour_history, (round(timer, digits=3), best.tour, best.cost))
+          push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), best.tour, best.cost))
           # println("Printing tour history")
           # println(tour_history)
         end
@@ -152,7 +152,7 @@ function solver(problem_instance, client_socket, given_initial_tour; args...)
 
 	end
 	timer = (time_ns() - start_time)/1.0e9
-  push!(tour_history, (round(timer, digits=3), lowest.tour, lowest.cost))
+  push!(tour_history, (round(time_ns() - start_time_for_tour_history), lowest.tour, lowest.cost))
   print_summary(lowest, timer, membership, param, tour_history)
 end
 end

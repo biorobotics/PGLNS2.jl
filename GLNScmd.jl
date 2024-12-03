@@ -96,6 +96,9 @@ else
   PORT = 65432
 end
 
+# Trigger just-in-time compilation before we start timing anything
+GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(); optional_args...)
+
 @printf("Server attempting to listen on port %d\n", PORT)
 server = listen(PORT)
 @printf("Server listening on port %d\n", PORT)
@@ -109,6 +112,7 @@ try
       global client_socket = accept(server)
     end
     msg = readline(client_socket)
+    start_time_for_tour_history = time_ns()
     if msg == "terminate"
       @printf("Server on port %d received termination signal", PORT)
       break
@@ -127,7 +131,7 @@ try
     for node_idx_str in msg_split[2:end]
       push!(given_initial_tour, parse(Int64, node_idx_str))
     end
-    GLNS.solver(problem_instance, client_socket, given_initial_tour; optional_args...)
+    GLNS.solver(problem_instance, client_socket, given_initial_tour, start_time_for_tour_history; optional_args...)
     write(client_socket, "solved")
     iter_count += 1
   end
