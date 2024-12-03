@@ -96,8 +96,9 @@ else
   PORT = 65432
 end
 
-@printf("Server listening on port %d\n", PORT)
+@printf("Server attempting to listen on port %d\n", PORT)
 server = listen(PORT)
+@printf("Server listening on port %d\n", PORT)
 
 client_socket = accept(server)
 
