@@ -238,12 +238,9 @@ function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
 	best = Tour(Int64[], typemax(Int64))
 
   if length(given_initial_tour) != 0
-    println("Initializing from given tour")
-    println(given_initial_tour)
     for node_idx in given_initial_tour
       push!(best.tour, node_idx)
     end
-    println("Initialized from given tour")
 	elseif param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
 		random_initial_tour!(best.tour, sets_to_insert, dist, sets)
 	else
