@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+using Printf
+
 #########  Input Parsing ############################
 
 """
@@ -507,6 +509,7 @@ end
 """print tour summary at end of execution"""
 function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1}, cost_mat_read_time::Float64, instance_read_time::Float64)
+  print_start_time = time_ns()
 	if param[:print_output] == 3 && !param[:timeout] && !param[:budget_met]
 		progress_bar(param[:cold_trials], 1.0, lowest.cost, round(timer, digits=1))
 	end
@@ -543,6 +546,8 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 			close(s)
 		end
 	end
+  print_end_time = time_ns()
+  @printf("Writing summary file took %f s", round((print_end_time - print_start_time)/(1.0e9), digits=3))
 end
 
 
