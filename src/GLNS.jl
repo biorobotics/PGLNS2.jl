@@ -28,7 +28,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance, client_socket, given_initial_tour, start_time_for_tour_history; args...)
+function solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -48,8 +48,9 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
   @printf("Reading cost mat file took %f s", cost_mat_read_time)
 
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
-  if length(given_initial_tour) != 0
-    param[:cold_trials] = 1
+  if length(given_initial_tours) != 0
+    @assert(length(given_initial_tours)%num_sets == 0)
+    param[:cold_trials] = div(length(given_initial_tours), num_sets)
   end
 	#####################################################
 	init_time = time()
@@ -72,7 +73,14 @@ function solver(problem_instance, client_socket, given_initial_tour, start_time_
 
 	while count[:cold_trial] <= param[:cold_trials]
 		# build tour from scratch on a cold restart
-  	best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership, given_initial_tour)
+    if length(given_initial_tours) != 0
+      start_idx = (count[:cold_trial] - 1)*num_sets + 1
+      end_idx = count[:cold_trial]*num_sets
+      initial_tour = given_initial_tours[start_idx:end_idx]
+    else
+      initial_tour = given_initial_tours
+    end
+    best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership, initial_tour)
     timer = (time_ns() - start_time)/1.0e9
 		# print_cold_trial(count, param, best)
 		phase = :early
