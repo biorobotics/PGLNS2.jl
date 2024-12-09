@@ -97,7 +97,7 @@ else
 end
 
 # Trigger just-in-time compilation before we start timing anything
-GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(); optional_args...)
+GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999; optional_args...)
 
 @printf("Server attempting to listen on port %d\n", PORT)
 try
@@ -132,11 +132,12 @@ try
     end
     msg_split = split(msg, " ")
     optional_args[Symbol("max_time")] = parse(Float64, msg_split[1])
+    inf_val = parse(Int64, msg_split[2])
     given_initial_tours = Vector{Int64}()
-    for node_idx_str in msg_split[2:end]
+    for node_idx_str in msg_split[3:end]
       push!(given_initial_tours, parse(Int64, node_idx_str))
     end
-    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history; optional_args...)
+    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val; optional_args...)
     write(client_socket, "solved")
     iter_count += 1
   end

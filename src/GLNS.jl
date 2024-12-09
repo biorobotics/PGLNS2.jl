@@ -28,7 +28,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history; args...)
+function solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -70,6 +70,8 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 	powers = initialize_powers(param)
 
   tour_history = Array{Tuple{Float64, Array{Int64,1}, Int64},1}()
+  num_trials_feasible = 0
+  num_trials = 0
 
 	while count[:cold_trial] <= param[:cold_trials]
 		# build tour from scratch on a cold restart
@@ -111,6 +113,18 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 				end
 				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
 
+        trial_infeasible = dist[trial.tour[end], trial.tour[1]] == inf_val
+        @inbounds for i in 1:length(trial.tour)-1
+          if trial_infeasible
+            break
+          end
+          trial_infeasible = dist[trial.tour[i], trial.tour[i+1]] == inf_val
+        end
+        if ~trial_infeasible
+          num_trials_feasible += 1
+        end
+        num_trials += 1
+
         if param[:lazy_edge_eval] == 1
           eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
         end
@@ -144,7 +158,7 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 					lowest.cost > best.cost && (lowest = best)
           push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
 					print_best(count, param, best, lowest, init_time)
-					print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time)
+					print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials)
 					return
 				end
 
@@ -176,6 +190,6 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 	end
 	timer = (time_ns() - start_time)/1.0e9
   push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
-  print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time)
+  print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials)
 end
 end
