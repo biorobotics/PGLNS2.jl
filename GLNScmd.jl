@@ -96,9 +96,6 @@ else
   PORT = 65432
 end
 
-# Trigger just-in-time compilation before we start timing anything
-GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999; optional_args...)
-
 @printf("Server attempting to listen on port %d\n", PORT)
 try
   global server = listen(PORT)
@@ -109,6 +106,10 @@ end
 @printf("Server listening on port %d\n", PORT)
 
 client_socket = accept(server)
+
+# Trigger just-in-time compilation before we start timing anything
+GLNS.solver(problem_instance, client_socket, Vector{Int64}(), time_ns(), 9999; optional_args...)
+write(client_socket, "solved")
 
 try
   iter_count = 0
