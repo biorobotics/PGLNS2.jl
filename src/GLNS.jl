@@ -56,10 +56,12 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 	init_time = time()
 
   confirmed_dist = zeros(Bool, size(dist, 1), size(dist, 2))
-  for edge in evaluated_edges
-    confirmed_dist[edge[1], edge[2]] = true
+  if param[:lazy_edge_eval] == 1
+    for edge in evaluated_edges
+      confirmed_dist[edge[1], edge[2]] = true
+    end
+    confirmed_dist[dist .== inf_val] .= true
   end
-  confirmed_dist[dist .== inf_val] .= true
 
 	count = Dict(:latest_improvement => 1,
 	  			 :first_improvement => false,
