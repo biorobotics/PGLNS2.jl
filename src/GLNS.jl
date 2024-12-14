@@ -117,6 +117,10 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 				end
 				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
 
+        if param[:lazy_edge_eval] == 1
+          eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+        end
+
         trial_infeasible = dist[trial.tour[end], trial.tour[1]] == inf_val
         @inbounds for i in 1:length(trial.tour)-1
           if trial_infeasible
@@ -128,10 +132,6 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
           num_trials_feasible += 1
         end
         num_trials += 1
-
-        if param[:lazy_edge_eval] == 1
-          eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
-        end
 
         # decide whether or not to accept trial
 				if accepttrial_noparam(trial.cost, current.cost, param[:prob_accept]) ||
@@ -146,9 +146,15 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 						count[:warm_trial] = 1
 					end
 					best = current
+          prev_best_cost = best.cost
+          prev_best_tour = best.tour
 					opt_cycle!(best, dist, sets, membership, param, setdist, "full")
           if param[:lazy_edge_eval] == 1
             eval_edges!(best, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+            if best.cost > prev_best_cost
+              best.cost = prev_best_cost
+              best.tour = prev_best_tour
+            end
           end
 	      else
 					count[:latest_improvement] += 1

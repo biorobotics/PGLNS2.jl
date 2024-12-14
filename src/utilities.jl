@@ -183,6 +183,7 @@ end
       end
     end
     if length(msg) == 0
+      tour.cost = tour_cost(tour.tour, dist)
       return
     end
 
