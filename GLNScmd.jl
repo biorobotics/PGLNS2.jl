@@ -96,6 +96,10 @@ else
   PORT = 65432
 end
 
+# Trigger just-in-time compilation before we start timing anything. This should be a GTSP with 2 sets, each with one element, and there should be an edge going both ways between the nodes
+evaluated_edges = [[1, 2], [2, 1]]
+GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges; optional_args...)
+
 @printf("Server attempting to listen on port %d\n", PORT)
 try
   global server = listen(PORT)
@@ -106,10 +110,6 @@ end
 @printf("Server listening on port %d\n", PORT)
 
 client_socket = accept(server)
-
-# Trigger just-in-time compilation before we start timing anything
-GLNS.solver(problem_instance, client_socket, Vector{Int64}(), time_ns(), 9999; optional_args...)
-write(client_socket, "solved")
 
 try
   iter_count = 0
@@ -138,7 +138,27 @@ try
     for node_idx_str in msg_split[3:end]
       push!(given_initial_tours, parse(Int64, node_idx_str))
     end
-    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val; optional_args...)
+
+    # Get already evaluated edges
+    evaluated_edges = Vector{Tuple{Int64, Int64}}()
+    if optional_args[Symbol("lazy_edge_eval")] == 1
+      msg = readline(client_socket)
+      if msg == "terminate"
+        @printf("Server on port %d received termination signal", PORT)
+        break
+      end
+      if length(msg) == 0
+        iter_count += 1
+        continue # Assume a client just closed its connection
+      end
+      msg_split = split(msg, " ")
+      for edge_str in msg_split
+        node_strs = split(edge_str, "-")
+        push!(evaluated_edges, (parse(Int64, node_strs[1]), parse(Int64, node_strs[2])))
+      end
+    end
+
+    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges; optional_args...)
     write(client_socket, "solved")
     iter_count += 1
   end
