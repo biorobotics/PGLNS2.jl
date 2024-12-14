@@ -98,7 +98,7 @@ end
 
 # Trigger just-in-time compilation before we start timing anything. This should be a GTSP with 2 sets, each with one element, and there should be an edge going both ways between the nodes
 evaluated_edges = [[1, 2], [2, 1]]
-GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges; optional_args...)
+GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, false; optional_args...)
 
 @printf("Server attempting to listen on port %d\n", PORT)
 try
@@ -141,6 +141,7 @@ try
 
     # Get already evaluated edges
     evaluated_edges = Vector{Tuple{Int64, Int64}}()
+    open_tsp = false
     if optional_args[Symbol("lazy_edge_eval")] == 1
       msg = readline(client_socket)
       if msg == "terminate"
@@ -153,12 +154,16 @@ try
       end
       msg_split = split(msg, " ")
       for edge_str in msg_split
-        node_strs = split(edge_str, "-")
-        push!(evaluated_edges, (parse(Int64, node_strs[1]), parse(Int64, node_strs[2])))
+        if edge_str == "o"
+          open_tsp = true
+        else
+          node_strs = split(edge_str, "-")
+          push!(evaluated_edges, (parse(Int64, node_strs[1]), parse(Int64, node_strs[2])))
+        end
       end
     end
 
-    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges; optional_args...)
+    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp; optional_args...)
     write(client_socket, "solved")
     iter_count += 1
   end

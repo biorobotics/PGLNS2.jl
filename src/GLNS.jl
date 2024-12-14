@@ -28,7 +28,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges; args...)
+function solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp; args...)
   println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -61,6 +61,9 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
       confirmed_dist[edge[1], edge[2]] = true
     end
     confirmed_dist[dist .== inf_val] .= true
+    if open_tsp
+      confirmed_dist[1:end, 1] .= true
+    end
   end
 
 	count = Dict(:latest_improvement => 1,
