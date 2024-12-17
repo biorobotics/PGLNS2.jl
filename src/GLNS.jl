@@ -122,9 +122,11 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 				end
 				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
 
-        if param[:lazy_edge_eval] == 1
-          eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
-        end
+				if trial.cost < best.cost
+          if param[:lazy_edge_eval] == 1
+            eval_edges!(trial, dist, confirmed_dist, client_socket, setdist, num_sets, membership)
+          end
+		    end
 
         trial_infeasible = dist[trial.tour[end], trial.tour[1]] == inf_val
         @inbounds for i in 1:length(trial.tour)-1
@@ -144,6 +146,7 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 					param[:mode] == "slow" && opt_cycle!(current, dist, sets, membership, param, setdist, "full") # This seems incorrect. Why are we optimizing current, then setting current = trial?
 				  current = trial
 		    end
+
 		    if current.cost < best.cost
 					count[:latest_improvement] = 1
 					count[:first_improvement] = true
