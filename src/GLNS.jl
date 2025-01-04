@@ -37,7 +37,7 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
 	read_end_time = time_ns()
   instance_read_time = (read_end_time - read_start_time)/1.0e9
-  @printf("Reading GTSPLIB file took %f s", instance_read_time)
+  @printf("Reading GTSPLIB file took %f s\n", instance_read_time)
 
   # Read cost matrix from npy file
 	read_start_time = time_ns()
@@ -45,7 +45,7 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
   dist = npzread(npyfile)
 	read_end_time = time_ns()
   cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
-  @printf("Reading cost mat file took %f s", cost_mat_read_time)
+  @printf("Reading cost mat file took %f s\n", cost_mat_read_time)
 
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
   if length(given_initial_tours) != 0
@@ -55,8 +55,8 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
 	#####################################################
 	init_time = time()
 
-  confirmed_dist = zeros(Bool, size(dist, 1), size(dist, 2))
   if param[:lazy_edge_eval] == 1
+    confirmed_dist = zeros(Bool, size(dist, 1), size(dist, 2))
     for edge in evaluated_edges
       confirmed_dist[edge[1], edge[2]] = true
     end
@@ -64,6 +64,8 @@ function solver(problem_instance, client_socket, given_initial_tours, start_time
     if open_tsp
       confirmed_dist[1:end, 1] .= true
     end
+  else
+    confirmed_dist = zeros(Bool, 1, 1)
   end
 
 	count = Dict(:latest_improvement => 1,
