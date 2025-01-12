@@ -188,7 +188,7 @@ end
     end
 
     # Remove trailing comma
-    msg = msg[1:end - 1]
+    msg = msg[1:end - 1]*"\n"
 
     write(client_socket, msg)
     updated_dists = [parse(Float64, updated_dist) for updated_dist in split(readline(client_socket), ' ')]

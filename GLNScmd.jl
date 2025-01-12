@@ -164,7 +164,7 @@ try
     end
 
     GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp; optional_args...)
-    write(client_socket, "solved")
+    write(client_socket, "solved\n")
     iter_count += 1
   end
 finally
