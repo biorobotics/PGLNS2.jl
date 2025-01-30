@@ -17,7 +17,7 @@
 Sequentially moves each vertex to its best point on the tour.
 Repeats until no more moves can be found
 """
-function moveopt!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Array{Any, 1}, 
+function moveopt!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Vector{Vector{Int64}}, 
 				  member::Array{Int64,1}, setdist::Distsv)
     improvement_found = true
     number_of_moves = 0
@@ -47,7 +47,7 @@ function moveopt!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Array{Any,
 end
 
 
-function moveopt_rand!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Array{Any, 1}, 
+function moveopt_rand!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Vector{Vector{Int64}}, 
 				  member::Array{Int64,1}, iters::Int, setdist::Distsv)
 	tour_inds = collect(1:length(tour))
 	@inbounds for i = 1:iters # i = rand(1:length(tour), iters)
@@ -103,7 +103,7 @@ end
 
 
 """ repeatedly perform moveopt and reopt_tour until there is no improvement """
-function opt_cycle!(current::Tour, dist::Array{Int64,2}, sets::Array{Any, 1}, 
+function opt_cycle!(current::Tour, dist::Array{Int64,2}, sets::Vector{Vector{Int64}}, 
 					member::Array{Int64,1}, param::Dict{Symbol, Any}, setdist::Distsv, use)
 	current.cost = tour_cost(current.tour, dist)
 	prev_cost = current.cost
@@ -128,7 +128,7 @@ end
 Given an ordering of the sets, this alg performs BFS to find the 
 optimal vertex in each set
 """
-function reopt_tour(tour::Array{Int64,1}, dist::Array{Int64,2}, sets::Array{Any, 1}, 
+function reopt_tour(tour::Array{Int64,1}, dist::Array{Int64,2}, sets::Vector{Vector{Int64}}, 
 					member::Array{Int64,1}, param::Dict{Symbol, Any})
     best_tour_cost = tour_cost(tour, dist)
 	new_tour = copy(tour)
@@ -154,7 +154,7 @@ end
 
 
 """ Find the set with the smallest number of vertices """
-function min_setv(tour::Array{Int64, 1}, sets::Array{Any, 1}, member::Array{Int64, 1}, 
+function min_setv(tour::Array{Int64, 1}, sets::Vector{Vector{Int64}}, member::Array{Int64, 1}, 
 				  param::Dict{Symbol, Any})
 	min_set = param[:min_set]
 	@inbounds for i = 1:length(tour)

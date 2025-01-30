@@ -115,7 +115,7 @@ function parameter_settings(num_vertices, num_sets, sets, problem_instance, args
 	param[:num_sets] = num_sets
 	param[:num_vertices] = num_vertices
 	param[:output_file] = get(args, :output, "None")
-	param[:print_output] = get(args, :verbose, 3)
+	param[:print_output] = get(args, :verbose, 0)
 	param[:epsilon] = get(args, :epsilon, 0.5)
 	param[:noise] = get(args, :noise, "Add")
 	param[:adaptive_iter] = 1

@@ -40,14 +40,14 @@ function pivot_tour!(tour::Array{Int64,1})
 end
 
 
-function randomize_sets!(sets::Array{Any, 1}, sets_to_insert::Array{Int64, 1})
+function randomize_sets!(sets::Vector{Vector{Int64}}, sets_to_insert::Array{Int64, 1})
 	for i in sets_to_insert
 		shuffle!(sets[i])
 	end
 end
 
 
-function findmember(num_vertices::Int64, sets::Array{Any, 1})
+function findmember(num_vertices::Int64, sets::Vector{Vector{Int64}})
     """  create an array containing the set number for each vertex """
 	member = zeros(Int64, num_vertices)
     num_verts = 0
@@ -107,7 +107,7 @@ end
 
 
 
-function set_vertex_distance(dist::Array{Int64, 2}, sets::Array{Any, 1})
+function set_vertex_distance(dist::Array{Int64, 2}, sets::Vector{Vector{Int64}})
     """
 	Computes the minimum distance between each set and each vertex
 	"""
@@ -128,7 +128,7 @@ end
 
 
 """ Find the set with the smallest number of vertices """
-function min_set(sets::Array{Any, 1})
+function min_set(sets::Vector{Vector{Int64}})
     min_size = length(sets[1])
 	min_index = 1
     for i = 2:length(sets)

@@ -17,7 +17,7 @@ Select a removal and an insertion method using powers, and then perform
 removal followed by insertion on tour.  Operation done in place.
 """
 function remove_insert(current::Tour, best::Tour, dist::Array{Int64,2}, member::Array{Int64,1},
-						setdist::Distsv, sets::Array{Any,1},
+						setdist::Distsv, sets::Vector{Vector{Int64}},
 						powers, param::Dict{Symbol,Any}, phase::Symbol)
 	# make a new tour to perform the insertion and deletion on
     trial = Tour(copy(current.tour), current.cost)
@@ -103,7 +103,7 @@ end
 """  choose set with pdf_select, and then insert in best place with noise  """
 function randpdf_insertion!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1},
 							dist::Array{Int64, 2}, setdist::Distsv,
-							sets::Array{Any, 1}, power::Float64, noise::Power)
+							sets::Vector{Vector{Int64}}, power::Float64, noise::Power)
 
     mindist = [typemax(Int64) for i=1:length(sets_to_insert)]
     @inbounds for i = 1:length(sets_to_insert)
@@ -145,7 +145,7 @@ end
 
 
 function cheapest_insertion!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1},
-	dist::Array{Int64, 2}, setdist::Distsv, sets::Array{Any, 1})
+	dist::Array{Int64, 2}, setdist::Distsv, sets::Vector{Vector{Int64}})
     """
 	choose vertex that can be inserted most cheaply, and insert it in that position
 	"""
@@ -232,7 +232,7 @@ end
 ############ Initial Tour Construction ##########################
 
 """build tour from scratch on a cold restart"""
-function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
+function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Vector{Vector{Int64}},
 						setdist::Distsv, trial_num::Int64, param::Dict{Symbol,Any}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, num_sets::Int, member::Array{Int64,1}, given_initial_tour::Vector{Int64})
 	sets_to_insert = collect(1:param[:num_sets])
 	best = Tour(Int64[], typemax(Int64))
@@ -266,7 +266,7 @@ Randomly shuffle the sets, and then insert the best vertex from each set back in
 the tour where sets are considered in shuffled order.
 """
 function random_insertion!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1},
-						   dist::Array{Int64, 2}, sets::Array{Any, 1}, setdist::Distsv)
+						   dist::Array{Int64, 2}, sets::Vector{Vector{Int64}}, setdist::Distsv)
     shuffle!(sets_to_insert)  # randomly permute the sets
     for set in sets_to_insert
         # only have to compute the insert cost for the changed portion of the tour
@@ -287,7 +287,7 @@ Randomly shuffle the sets, and then insert the best vertex from each set back in
 the tour where sets are considered in shuffled order.
 """
 function random_initial_tour!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1},
-							  dist::Array{Int64, 2}, sets::Array{Any, 1})
+							  dist::Array{Int64, 2}, sets::Vector{Vector{Int64}})
     shuffle!(sets_to_insert)
     for set in sets_to_insert
 		push!(tour, rand(sets[set]))

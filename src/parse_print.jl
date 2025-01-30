@@ -48,7 +48,8 @@ function read_file(filename)
     data_type = ""
     data_format = ""
     dist = zeros(Int64, 0, 0)
-    sets = Any[]
+    # sets = Any[]
+    sets = Vector{Vector{Int64}}()
     vid00 = vid01 = 1
     coords = Any[]
     set_data = Int64[]
@@ -549,7 +550,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 		end
 	end
   print_end_time = time_ns()
-  @printf("Writing summary file took %f s", round((print_end_time - print_start_time)/(1.0e9), digits=3))
+  # @printf("Writing summary file took %f s", round((print_end_time - print_start_time)/(1.0e9), digits=3))
 end
 
 
