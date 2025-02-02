@@ -28,7 +28,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::Vector{Int64}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Vector{Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::Matrix{Int64}, membership::Vector{Int64}; args...)
+function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::Vector{Int64}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Vector{Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::Matrix{Int64}, membership::Vector{Int64}, run_number::Int64; args...)
   # println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
