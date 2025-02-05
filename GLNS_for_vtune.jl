@@ -98,39 +98,51 @@ function parse_cmd(ARGS)
 end
 
 function main()
-  # ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/debug50/custom0.gtsp", "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
-  ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/debug/custom0.gtsp", "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
-  # ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/debug200_1/custom0.gtsp", "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
-  # ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/debug200_seed1/custom0.gtsp", "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
+  # analysis_option = "performance-snapshot"
+  analysis_option = "hotspots"
+
+
+  # Should be in the /home/cobra/GLKH-1.1/GTSPLIB folder
+  instance_folder = "debug"
+
+  # ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/"*instance_folder*"/custom0.gtsp", "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
+  ARGS = ["/home/cobra/GLKH-1.1/GTSPLIB/"*instance_folder*"/custom0.gtsp", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
+  given_intial_tours = Vector{Int64}()
 
   problem_instance, optional_args = parse_cmd(ARGS)
   problem_instance = String(problem_instance)
+
+  read_start_time = time_ns()
   num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+  read_end_time = time_ns()
+  instance_read_time = (read_end_time - read_start_time)/1.0e9
+
+  read_start_time = time_ns()
   npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
   dist = npzread(npyfile)
+  read_end_time = time_ns()
+  cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
 
-  evaluated_edges = [[1, 2], [2, 1]]
+  evaluated_edges = [(1, 2), (2, 1)]
 
   # debug folder
-  given_initial_tours = [   0,    1,   35,   86,   18,   69,  120,  137,  103,   52,  154,  171,  222,  205,  188,  273,  239,  256,  307,  290,  341,  324,  392,  358,  375,  426,  460,  409,  443,  494,  477,  528,  562,  511,  596,  545,  579,  613,  681,  647,  630,  664,  715,  698,  749,  732,  766,  834,  817,  783,  800,  851,  885,  868,  936,  902,  919,  970,  987,  953, 1004, 1021, 1055, 1089, 1072, 1038, 1106, 1123, 1140, 1191, 1208, 1157, 1174, 1242, 1225, 1276, 1310, 1344, 1293, 1259, 1327, 1378, 1412, 1429, 1361, 1395, 1463, 1480, 1497, 1531, 1548, 1446, 1565, 1514, 1582, 1616, 1599, 1650, 1633, 1684, 1718, 1735, 1752, 1667, 1769, 1701, 1837, 1854, 1786, 1803, 1820, 1888, 1905, 1871, 1922, 1939, 1956, 1990, 2007, 1973, 2024, 2041, 2058, 2075, 2126, 2092, 2160, 2109, 2143, 2177, 2194, 2228, 2211, 2245, 2279, 2296, 2313, 2262, 2347, 2364, 2330, 2381, 2415, 2432, 2398, 2483, 2466, 2500, 2449, 2517, 2551, 2585, 2602, 2534, 2636, 2568, 2653, 2619, 2670, 2738, 2704, 2687, 2789, 2772, 2721, 2806, 2755, 2823, 2840, 2857, 2908, 2925, 2891, 2874, 3010, 2942, 2959, 2993, 2976, 3061, 3027, 3044, 3095, 3112, 3146, 3078, 3163, 3180, 3197, 3129, 3231, 3248, 3265, 3214, 3282, 3299, 3316, 3333, 3367, 3350, 3384] .+ 1
-
-  # debug200_seed1 folder
-  # given_initial_tours =  [   0,	1,   35,   86,   18,   69,  120,  137,  103,   52,  154,  171,  222,  205,  188,  273,  239,  256,  307,  290,  341,  324,  392,  358,  375,  426,  460,  409,  443,  494,  477,  528,  562,  511,  596,  545,  579,  613,  681,  647,  630,  664,  715,  698,  749,  732,  766,  834,  817,  783,  800,  851,  885,  868,  936,  902,  919,  970,  987,  953, 1004, 1021, 1055, 1089, 1072, 1038, 1106, 1123, 1140, 1191, 1208, 1157, 1174, 1242, 1225, 1276, 1310, 1344, 1293, 1259, 1327, 1378, 1412, 1429, 1361, 1395, 1463, 1480, 1497, 1531, 1548, 1446, 1565, 1514, 1582, 1616, 1599, 1650, 1633, 1684, 1718, 1735, 1752, 1667, 1769, 1701, 1837, 1854, 1786, 1803, 1820, 1888, 1905, 1871, 1922, 1939, 1956, 1990, 2007, 1973, 2024, 2041, 2058, 2075, 2126, 2092, 2160, 2109, 2143, 2177, 2194, 2228, 2211, 2245, 2279, 2296, 2313, 2262, 2347, 2364, 2330, 2381, 2415, 2432, 2398, 2483, 2466, 2500, 2449, 2517, 2551, 2585, 2602, 2534, 2636, 2568, 2653, 2619, 2670, 2738, 2704, 2687, 2789, 2772, 2721, 2806, 2755, 2823, 2840, 2857, 2908, 2925, 2891, 2874, 3010, 2942, 2959, 2993, 2976, 3061, 3027, 3044, 3095, 3112, 3146, 3078, 3163, 3180, 3197, 3129, 3231, 3248, 3265, 3214, 3282, 3299, 3316, 3333, 3367, 3350, 3384] .+ 1
-
-  # debug200_1 folder
-  # given_initial_tours = [  0,   1,   3,   5,   7,  13,   9,  15,  11,  19,  21,  17,  27,  25,  23,  31,  29,  37,  39,  33,  35,  41,  43,  47,  45,  49,  51,  55,  53,  57,  63,  59,  67,  61,  69,  65,  71,  73,  75,  83,  81,  79,  89,  87,  85,  77,  93,  91,  95,  99,  97, 105, 101, 103, 109, 107, 111, 113, 115, 117, 119, 121, 125, 131, 123, 127, 137, 129, 133, 141, 135, 139, 149, 143, 145, 151, 153, 147, 161, 163, 155, 165, 157, 159, 169, 167, 173, 175, 171, 177, 181, 179, 183, 187, 193, 185, 191, 195, 199, 197, 189, 203, 205, 209, 207, 201, 211, 213, 219, 221, 217, 215, 223, 225, 235, 227, 231, 233, 229, 239, 237, 243, 241, 251, 257, 253, 245, 255, 249, 247, 263, 259, 261, 271, 267, 269, 265, 275, 277, 281, 283, 289, 273, 285, 291, 279, 293, 287, 297, 295, 299, 305, 307, 303, 301, 309, 317, 319, 315, 321, 311, 323, 313, 325, 333, 327, 329, 331, 339, 337, 341, 345, 343, 335, 347, 349, 355, 353, 351, 357, 363, 361, 359, 367, 365, 369, 373, 371, 375, 377, 383, 379, 381, 387, 389, 391, 393, 395, 399, 385, 397] .+ 1
-
-  # debug50 folder
-  # given_initial_tours = [  0,   1,  35,  86,  18,  69, 120, 137, 103,  52, 154, 171, 222, 205, 188, 273, 239, 256, 307, 290, 341, 324, 392, 358, 375, 426, 460, 409, 443, 494, 477, 528, 562, 511, 596, 545, 579, 613, 681, 647, 630, 664, 715, 698, 749, 732, 766, 834, 817, 783, 800] .+ 1
-
-  # debug50_1 folder
-  # given_initial_tours = [ 0,  1,  5, 11,  3,  9, 15, 17, 13,  7, 19, 21, 27, 25, 23, 33, 29, 31, 37, 35, 41, 39, 47, 43, 45, 51, 55, 49, 53, 59, 57, 63, 67, 61, 71, 65, 69, 73, 81, 77, 75, 79, 85, 83, 89, 87, 91, 99, 97, 93, 95] .+ 1
+  if instance_folder == "debug"
+    given_initial_tours = [   0,    1,   35,   86,   18,   69,  120,  137,  103,   52,  154,  171,  222,  205,  188,  273,  239,  256,  307,  290,  341,  324,  392,  358,  375,  426,  460,  409,  443,  494,  477,  528,  562,  511,  596,  545,  579,  613,  681,  647,  630,  664,  715,  698,  749,  732,  766,  834,  817,  783,  800,  851,  885,  868,  936,  902,  919,  970,  987,  953, 1004, 1021, 1055, 1089, 1072, 1038, 1106, 1123, 1140, 1191, 1208, 1157, 1174, 1242, 1225, 1276, 1310, 1344, 1293, 1259, 1327, 1378, 1412, 1429, 1361, 1395, 1463, 1480, 1497, 1531, 1548, 1446, 1565, 1514, 1582, 1616, 1599, 1650, 1633, 1684, 1718, 1735, 1752, 1667, 1769, 1701, 1837, 1854, 1786, 1803, 1820, 1888, 1905, 1871, 1922, 1939, 1956, 1990, 2007, 1973, 2024, 2041, 2058, 2075, 2126, 2092, 2160, 2109, 2143, 2177, 2194, 2228, 2211, 2245, 2279, 2296, 2313, 2262, 2347, 2364, 2330, 2381, 2415, 2432, 2398, 2483, 2466, 2500, 2449, 2517, 2551, 2585, 2602, 2534, 2636, 2568, 2653, 2619, 2670, 2738, 2704, 2687, 2789, 2772, 2721, 2806, 2755, 2823, 2840, 2857, 2908, 2925, 2891, 2874, 3010, 2942, 2959, 2993, 2976, 3061, 3027, 3044, 3095, 3112, 3146, 3078, 3163, 3180, 3197, 3129, 3231, 3248, 3265, 3214, 3282, 3299, 3316, 3333, 3367, 3350, 3384] .+ 1
+  elseif instance_folder == "debug200_seed1"
+    given_initial_tours =  [   0,	1,   35,   86,   18,   69,  120,  137,  103,   52,  154,  171,  222,  205,  188,  273,  239,  256,  307,  290,  341,  324,  392,  358,  375,  426,  460,  409,  443,  494,  477,  528,  562,  511,  596,  545,  579,  613,  681,  647,  630,  664,  715,  698,  749,  732,  766,  834,  817,  783,  800,  851,  885,  868,  936,  902,  919,  970,  987,  953, 1004, 1021, 1055, 1089, 1072, 1038, 1106, 1123, 1140, 1191, 1208, 1157, 1174, 1242, 1225, 1276, 1310, 1344, 1293, 1259, 1327, 1378, 1412, 1429, 1361, 1395, 1463, 1480, 1497, 1531, 1548, 1446, 1565, 1514, 1582, 1616, 1599, 1650, 1633, 1684, 1718, 1735, 1752, 1667, 1769, 1701, 1837, 1854, 1786, 1803, 1820, 1888, 1905, 1871, 1922, 1939, 1956, 1990, 2007, 1973, 2024, 2041, 2058, 2075, 2126, 2092, 2160, 2109, 2143, 2177, 2194, 2228, 2211, 2245, 2279, 2296, 2313, 2262, 2347, 2364, 2330, 2381, 2415, 2432, 2398, 2483, 2466, 2500, 2449, 2517, 2551, 2585, 2602, 2534, 2636, 2568, 2653, 2619, 2670, 2738, 2704, 2687, 2789, 2772, 2721, 2806, 2755, 2823, 2840, 2857, 2908, 2925, 2891, 2874, 3010, 2942, 2959, 2993, 2976, 3061, 3027, 3044, 3095, 3112, 3146, 3078, 3163, 3180, 3197, 3129, 3231, 3248, 3265, 3214, 3282, 3299, 3316, 3333, 3367, 3350, 3384] .+ 1
+  elseif instance_folder == "debug200_1"
+    given_initial_tours = [  0,   1,   3,   5,   7,  13,   9,  15,  11,  19,  21,  17,  27,  25,  23,  31,  29,  37,  39,  33,  35,  41,  43,  47,  45,  49,  51,  55,  53,  57,  63,  59,  67,  61,  69,  65,  71,  73,  75,  83,  81,  79,  89,  87,  85,  77,  93,  91,  95,  99,  97, 105, 101, 103, 109, 107, 111, 113, 115, 117, 119, 121, 125, 131, 123, 127, 137, 129, 133, 141, 135, 139, 149, 143, 145, 151, 153, 147, 161, 163, 155, 165, 157, 159, 169, 167, 173, 175, 171, 177, 181, 179, 183, 187, 193, 185, 191, 195, 199, 197, 189, 203, 205, 209, 207, 201, 211, 213, 219, 221, 217, 215, 223, 225, 235, 227, 231, 233, 229, 239, 237, 243, 241, 251, 257, 253, 245, 255, 249, 247, 263, 259, 261, 271, 267, 269, 265, 275, 277, 281, 283, 289, 273, 285, 291, 279, 293, 287, 297, 295, 299, 305, 307, 303, 301, 309, 317, 319, 315, 321, 311, 323, 313, 325, 333, 327, 329, 331, 339, 337, 341, 345, 343, 335, 347, 349, 355, 353, 351, 357, 363, 361, 359, 367, 365, 369, 373, 371, 375, 377, 383, 379, 381, 387, 389, 391, 393, 395, 399, 385, 397] .+ 1
+  elseif instance_folder == "debug50"
+    given_initial_tours = [  0,   1,  35,  86,  18,  69, 120, 137, 103,  52, 154, 171, 222, 205, 188, 273, 239, 256, 307, 290, 341, 324, 392, 358, 375, 426, 460, 409, 443, 494, 477, 528, 562, 511, 596, 545, 579, 613, 681, 647, 630, 664, 715, 698, 749, 732, 766, 834, 817, 783, 800] .+ 1
+  elseif instance_folder == "debug50_1"
+    given_initial_tours = [ 0,  1,  5, 11,  3,  9, 15, 17, 13,  7, 19, 21, 27, 25, 23, 33, 29, 31, 37, 35, 41, 39, 47, 43, 45, 51, 55, 49, 53, 59, 57, 63, 67, 61, 71, 65, 69, 73, 81, 77, 75, 79, 85, 83, 89, 87, 91, 99, 97, 93, 95] .+ 1
+  end
 
   sets_copy = deepcopy(sets)
 
   # For JIT
   i = 1
-  GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, i; optional_args...)
+  GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, true, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time; optional_args...)
 
   # GLNS changes the order of the elements of the sets. Change order back for the next run
   for setind=1:length(sets)
@@ -140,36 +152,63 @@ function main()
   end
   i = 2
 
-  # IntelITT.@collect GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, i; optional_args...)
-  # IntelITT.resume()
-
-  # TODO: replace with the IntelITT version if they respond to my issue
-  max_log_num = 1000
-  log_str = ""
-  log_suffix = "ps" # performance snapshot
-  # log_suffix = "hs" # hotspot
-  for log_num=1:max_log_num
-    log_str = "r"*string(log_num, pad=3)*log_suffix
-    if isdir(log_str) && 
-       !isdir("r"*string(log_num + 1, pad=3)*"ps") && 
-       !isdir("r"*string(log_num + 1, pad=3)*"ps-bad") &&
-       !isdir("r"*string(log_num + 1, pad=3)*"hs") && 
-       !isdir("r"*string(log_num + 1, pad=3)*"hs-bad")
-      break
-    end
-  end
-
-  cmd = `vtune -r /home/cobra/GLNS_lazy_edge_eval.jl/$log_str -command resume`
-  run(pipeline(cmd, stdout=stdout, stderr=stdout); wait=false)
+  pid = string(getpid())
 
   num_runs = 10
   for i=1:num_runs
-    GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, i; optional_args...)
-  end
-  # IntelITT.pause()
+    max_log_num = 1000
+    log_str = ""
+    log_suffix = analysis_option == "performance-snapshot" ? "ps" : "hs"
+    for log_num=1:max_log_num
+      log_str = "r"*string(log_num, pad=3)*log_suffix
+      if !isdir(log_str) && 
+         !isdir("r"*string(log_num, pad=3)*"ps") && 
+         !isdir("r"*string(log_num, pad=3)*"ps-bad") &&
+         !isdir("r"*string(log_num, pad=3)*"hs") && 
+         !isdir("r"*string(log_num, pad=3)*"hs-bad")
+        break
+      end
+    end
 
-  flush(stdout)
-  flush(stderr)
+    # Start vtune in paused mode
+    cmd = `vtune -collect $analysis_option -start-paused -target-pid $pid`
+    vtune_proc = run(pipeline(cmd, stdout=stdout, stderr=stdout); wait=false)
+
+    # TODO: replace with the IntelITT version if they respond to my issue
+    # Unpause vtune
+    @printf("Resuming the vtune process writing to %s\n", log_str)
+    cmd = `vtune -r /home/cobra/GLNS_lazy_edge_eval.jl/$log_str -command resume`
+    while true
+      try
+        run(pipeline(cmd, stdout=stdout, stderr=stdout); wait=true)
+        break
+      catch e
+        println(e)
+      end
+      sleep(0.1)
+    end
+
+    # IntelITT.@collect GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, true, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time; optional_args...)
+    # IntelITT.resume()
+    @printf("Starting run %d\n", i)
+    GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, time_ns(), 9999, evaluated_edges, true, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time; optional_args...)
+    @printf("Finished run %d\n", i)
+    # IntelITT.pause()
+
+    cmd = `vtune -r /home/cobra/GLNS_lazy_edge_eval.jl/$log_str -command stop`
+    run(pipeline(cmd, stdout=stdout, stderr=stdout); wait=true)
+
+    flush(stdout)
+    flush(stderr)
+    wait(vtune_proc)
+
+    # GLNS changes the order of the elements of the sets. Change order back for the next run
+    for setind=1:length(sets)
+      for memberind=1:length(sets[setind])
+        sets[setind][memberind] = sets_copy[setind][memberind]
+      end
+    end
+  end
 end
 
 main()

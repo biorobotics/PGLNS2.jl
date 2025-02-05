@@ -509,13 +509,14 @@ end
 
 """print tour summary at end of execution"""
 function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
-						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1}, cost_mat_read_time::Float64, instance_read_time::Float64, num_trials_feasible::Int64, num_trials::Int64)
+						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1}, cost_mat_read_time::Float64, instance_read_time::Float64, num_trials_feasible::Int64, num_trials::Int64, did_timeout::Bool)
   print_start_time = time_ns()
 	if param[:print_output] == 3 && !param[:timeout] && !param[:budget_met]
 		progress_bar(param[:cold_trials], 1.0, lowest.cost, round(timer, digits=1))
 	end
 	if param[:print_output] > -1
-		if (param[:print_output] > 0 || param[:output_file] == "None")
+		# if (param[:print_output] > 0 || param[:output_file] == "None")
+		if (param[:print_output] > 0)
 			println("\n\n", "--------- Tour Summary ------------")
 			println("Cost              : ", lowest.cost)
 			println("Total Time        : ", round(timer, digits=2), " sec")
@@ -538,6 +539,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 			write(s, "Solver Time      : ", string(round(timer, digits=3)), " sec\n")
 			write(s, "Cost Mat Rd Time : ", string(round(cost_mat_read_time, digits=3)), " sec\n")
 			write(s, "Instance Rd Time : ", string(round(instance_read_time, digits=3)), " sec\n")
+			write(s, "Timed out? : ", string(did_timeout))
 			write(s, "Tour Cost        : ", string(lowest.cost), "\n")
 			write(s, "Tour             : ", string(lowest.tour), "\n")
 			write(s, "Num Feas Trials  : ", string(num_trials_feasible), "\n")

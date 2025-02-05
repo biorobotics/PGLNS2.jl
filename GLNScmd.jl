@@ -20,6 +20,14 @@ Pkg.activate(expanduser("~/GLNS_lazy_edge_eval.jl"))
 using GLNS
 using Printf
 
+using NPZ
+include("src/utilities.jl")
+include("src/parse_print.jl")
+include("src/tour_optimizations.jl")
+include("src/adaptive_powers.jl")
+include("src/insertion_deletion.jl")
+include("src/parse_print.jl")
+
 """
 Optional Flags -- values are given in square brackets []  
 	-max_time=[Int]				 (default set by mode)
@@ -88,62 +96,54 @@ function parse_cmd(ARGS)
 	return filename, optional_args
 end
 
-problem_instance, optional_args = parse_cmd(ARGS)
+function main()
+  problem_instance, optional_args = parse_cmd(ARGS)
+  problem_instance = String(problem_instance)
 
-if haskey(optional_args, Symbol("socket_port"))
-  PORT = optional_args[Symbol("socket_port")]
-else
-  PORT = 65432
-end
+  if haskey(optional_args, Symbol("socket_port"))
+    PORT = optional_args[Symbol("socket_port")]
+  else
+    PORT = 65432
+  end
 
-# Trigger just-in-time compilation before we start timing anything. This should be a GTSP with 2 sets, each with one element, and there should be an edge going both ways between the nodes
-evaluated_edges = [[1, 2], [2, 1]]
-GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, false; optional_args...)
+  # Trigger just-in-time compilation before we start timing anything. This should be a GTSP with 2 sets, each with one element, and there should be an edge going both ways between the nodes
+  read_start_time = time_ns()
+  num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+  read_end_time = time_ns()
+  instance_read_time = (read_end_time - read_start_time)/1.0e9
+  @printf("Reading GTSPLIB file took %f s\n", instance_read_time)
 
-@printf("Server attempting to listen on port %d\n", PORT)
-try
-  global server = listen(PORT)
-catch e
-  @printf("Server on port %d failed to listen\n", PORT)
-  exit()
-end
-@printf("Server listening on port %d\n", PORT)
+  # Read cost matrix from npy file
+  read_start_time = time_ns()
+  npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
+  dist = npzread(npyfile)
+  read_end_time = time_ns()
+  cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
+  @printf("Reading cost mat file took %f s\n", cost_mat_read_time)
 
-client_socket = accept(server)
+  evaluated_edges = [(1, 2), (2, 1)]
+  GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, false; optional_args...)
 
-try
-  iter_count = 0
-  while true
-    if iter_count != 0 && haskey(optional_args, Symbol("new_socket_each_instance")) && optional_args[Symbol("new_socket_each_instance")] == 1
-      global client_socket = accept(server)
-    end
-    msg = readline(client_socket)
-    start_time_for_tour_history = time_ns()
-    if msg == "terminate"
-      @printf("Server on port %d received termination signal", PORT)
-      break
-    end
-    if length(msg) == 0
-      iter_count += 1
-      continue # Assume a client just closed its connection
-    end
-    if !isfile(problem_instance)
-      println("the problem instance  ", problem_instance, " does not exist")
-      break
-    end
-    msg_split = split(msg, " ")
-    optional_args[Symbol("max_time")] = parse(Float64, msg_split[1])
-    inf_val = parse(Int64, msg_split[2])
-    given_initial_tours = Vector{Int64}()
-    for node_idx_str in msg_split[3:end]
-      push!(given_initial_tours, parse(Int64, node_idx_str))
-    end
+  @printf("Server attempting to listen on port %d\n", PORT)
+  server = TCPSocket()
+  try
+    server = listen(PORT)
+  catch e
+    @printf("Server on port %d failed to listen\n", PORT)
+    exit()
+  end
+  @printf("Server listening on port %d\n", PORT)
 
-    # Get already evaluated edges
-    evaluated_edges = Vector{Tuple{Int64, Int64}}()
-    open_tsp = false
-    if optional_args[Symbol("lazy_edge_eval")] == 1
+  client_socket = accept(server)
+
+  try
+    iter_count = 0
+    while true
+      if iter_count != 0 && haskey(optional_args, Symbol("new_socket_each_instance")) && optional_args[Symbol("new_socket_each_instance")] == 1
+        client_socket = accept(server)
+      end
       msg = readline(client_socket)
+      start_time_for_tour_history = time_ns()
       if msg == "terminate"
         @printf("Server on port %d received termination signal", PORT)
         break
@@ -152,22 +152,80 @@ try
         iter_count += 1
         continue # Assume a client just closed its connection
       end
+      if !isfile(problem_instance)
+        println("the problem instance  ", problem_instance, " does not exist")
+        break
+      end
       msg_split = split(msg, " ")
-      for edge_str in msg_split
-        if edge_str == "o"
-          open_tsp = true
-        else
-          node_strs = split(edge_str, "-")
-          push!(evaluated_edges, (parse(Int64, node_strs[1]), parse(Int64, node_strs[2])))
+      optional_args[Symbol("max_time")] = parse(Float64, msg_split[1])
+      inf_val = parse(Int64, msg_split[2])
+      given_initial_tours = Vector{Int64}()
+      for node_idx_str in msg_split[3:end]
+        push!(given_initial_tours, parse(Int64, node_idx_str))
+      end
+
+      # Get already evaluated edges
+      evaluated_edges = Vector{Tuple{Int64, Int64}}()
+      open_tsp = false
+      if optional_args[Symbol("lazy_edge_eval")] == 1
+        msg = readline(client_socket)
+        if msg == "terminate\n"
+          @printf("Server on port %d received termination signal", PORT)
+          break
+        end
+        if length(msg) == 0
+          iter_count += 1
+          continue # Assume a client just closed its connection
+        end
+        msg_split = split(msg, " ")
+        for edge_str in msg_split
+          if edge_str == "o"
+            open_tsp = true
+          else
+            node_strs = split(edge_str, "-")
+            push!(evaluated_edges, (parse(Int64, node_strs[1]), parse(Int64, node_strs[2])))
+          end
         end
       end
-    end
 
-    GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp; optional_args...)
-    write(client_socket, "solved\n")
-    iter_count += 1
+      # do_perf = true
+      do_perf = false
+      perf_file = ""
+      if do_perf
+        msg = readline(client_socket)
+        if msg == "terminate\n"
+          @printf("Server on port %d received termination signal", PORT)
+          break
+        end
+        if length(msg) == 0
+          iter_count += 1
+          continue # Assume a client just closed its connection
+        end
+        perf_file = msg
+      end
+
+      read_start_time = time_ns()
+      num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+      read_end_time = time_ns()
+      instance_read_time = (read_end_time - read_start_time)/1.0e9
+      @printf("Reading GTSPLIB file took %f s\n", instance_read_time)
+
+      # Read cost matrix from npy file
+      read_start_time = time_ns()
+      npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
+      dist = npzread(npyfile)
+      read_end_time = time_ns()
+      cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
+      @printf("Reading cost mat file took %f s\n", cost_mat_read_time)
+
+      GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
+      write(client_socket, "solved\n")
+      iter_count += 1
+    end
+  finally
+    close(server)
+    @printf("Closed server on port %d\n", PORT)
   end
-finally
-  close(server)
-  @printf("Closed server on port %d\n", PORT)
 end
+
+main()
