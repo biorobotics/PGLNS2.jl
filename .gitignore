@@ -1,0 +1,8 @@
+*.jlprof
+r*ps
+r*hs
+r*ps-bad
+r*hs-bad
+*.tour
+*.gz
+*.so
