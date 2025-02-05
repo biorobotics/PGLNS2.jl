@@ -1,0 +1,6 @@
+precompile(Tuple{Type{Printf.Format{S, T} where T where S}, Base.CodeUnits{UInt8, String}, Array{Base.UnitRange{Int64}, 1}, Tuple{Printf.Spec{Base.Val{Char(0x64000000)}}}, Int64})
+precompile(Tuple{Type{Printf.Format{S, T} where T where S}, Base.CodeUnits{UInt8, String}, Array{Base.UnitRange{Int64}, 1}, Tuple{Printf.Spec{Base.Val{Char(0x66000000)}}}, Int64})
+precompile(Tuple{typeof(Main.main)})
+precompile(Tuple{typeof(Printf.format), Base.TTY, Printf.Format{Base.CodeUnits{UInt8, String}, Tuple{Printf.Spec{Base.Val{Char(0x64000000)}}}}, Int64})
+precompile(Tuple{typeof(Printf.format), Base.TTY, Printf.Format{Base.CodeUnits{UInt8, String}, Tuple{Printf.Spec{Base.Val{Char(0x66000000)}}}}, Float64})
+precompile(Tuple{typeof(Base.close), Sockets.TCPServer})
