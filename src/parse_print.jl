@@ -47,7 +47,6 @@ function read_file(filename)
     parse_state = "UNKNOWN_FORMAT"
     data_type = ""
     data_format = ""
-    dist = zeros(Int64, 0, 0)
     # sets = Any[]
     sets = Vector{Vector{Int64}}()
     vid00 = vid01 = 1
@@ -80,7 +79,6 @@ function read_file(filename)
             elseif occursin(r"^\s*TYPE\s*:\s*\w+\s*$", uppercase(line))
             elseif occursin(r"^\s*DIMENSION\s*:\s*\d+\s*$", uppercase(line))
                 num_vertices = parse(Int64, value)
-                dist = zeros(Int64, num_vertices, num_vertices)
             elseif occursin(r"^\s*GTSP_SETS\s*:\s*\d+\s*$", uppercase(line))
                 num_sets = parse(Int64, value)
             elseif occursin(r"^\s*EDGE_WEIGHT_TYPE\s*:\s*\w+\s*$", uppercase(line))
@@ -191,7 +189,6 @@ function read_file(filename)
             if occursin(r"^\s*N\s*:\s*\w+", uppercase(line))
                 value = strip(split(strip(line),":")[end])
                 num_vertices = parse(Int64, value)
-                dist = zeros(Int64, num_vertices, num_vertices)
             elseif occursin(r"^\s*M\s*:\s*\d+\s*$", uppercase(line))
                 value = strip(split(strip(line),":")[end])
                 num_sets = parse(Int64, value)
@@ -367,7 +364,7 @@ function read_file(filename)
 
 	  membership = findmember(num_vertices, sets)
 
-    return num_vertices, num_sets, sets, dist, membership
+    return num_vertices, num_sets, sets, membership
 end
 
 
@@ -539,7 +536,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 			write(s, "Solver Time      : ", string(round(timer, digits=3)), " sec\n")
 			write(s, "Cost Mat Rd Time : ", string(round(cost_mat_read_time, digits=3)), " sec\n")
 			write(s, "Instance Rd Time : ", string(round(instance_read_time, digits=3)), " sec\n")
-			write(s, "Timed out? : ", string(did_timeout))
+			write(s, "Timed out? : ", string(did_timeout), "\n")
 			write(s, "Tour Cost        : ", string(lowest.cost), "\n")
 			write(s, "Tour             : ", string(lowest.tour), "\n")
 			write(s, "Num Feas Trials  : ", string(num_trials_feasible), "\n")
