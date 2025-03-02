@@ -17,6 +17,7 @@ using Random
 using Sockets
 using Printf
 using NPZ
+using CPUTime
 include("utilities.jl")
 include("parse_print.jl")
 include("tour_optimizations.jl")
@@ -77,12 +78,14 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
     # cmd = `perf stat -p $pid -M tma_l1_bound -e L1-dcache-load-misses,L1-dcache-loads -o $perf_file`
     # cmd = `perf stat -p $pid -e L1-dcache-load-misses,L1-dcache-loads,offcore_response.pf_l1d_and_sw.l3_hit.any_snoop,offcore_response.pf_l1d_and_sw.l3_miss.any_snoop -o $perf_file`
     cmd = `perf stat -p $pid -M tma_l1_bound,tma_l2_bound,tma_l3_bound,tma_dram_bound -e LLC-loads,LLC-load-misses -o $perf_file`
+    # cmd = `perf stat -p $pid -M tma_dram_bound -o $perf_file`
     perf_proc = run(pipeline(cmd, stdout=stdout, stderr=stdout); wait=false)
     perf_pid = getpid(perf_proc)
     # sleep(1)
   end
 
 	start_time = time_ns()
+  start_proc_time = CPUtime_us()
 	# compute set distances which will be helpful
 	setdist = set_vertex_dist(dist, num_sets, membership)
 	powers = initialize_powers(param)
@@ -193,7 +196,8 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
           end
 
 					print_best(count, param, best, lowest, init_time)
-					print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, true)
+          proc_timer = (CPUtime_us() - start_proc_time)/1e6
+					print_summary(lowest, timer, proc_timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, true)
           return
 				end
 
@@ -232,7 +236,8 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
     @assert(perf_pid != -1)
     run(`kill -2 $perf_pid`)
   end
-  print_summary(lowest, timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, false)
+  proc_timer = (CPUtime_us() - start_proc_time)/1e6
+  print_summary(lowest, timer, proc_timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, false)
 end
 
 function parse_cmd(ARGS)
@@ -311,7 +316,7 @@ function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_ini
   num_vertices, num_sets, sets, _, membership = read_file(problem_instance)
   read_end_time = time_ns()
   instance_read_time = (read_end_time - read_start_time)/1.0e9
-  @printf("Reading GTSPLIB file took %f s\n", instance_read_time)
+  println("Reading GTSPLIB file took ", instance_read_time, " s")
 
   cost_mat_read_time = 0.
 

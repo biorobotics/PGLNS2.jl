@@ -508,7 +508,7 @@ end
 
 
 """print tour summary at end of execution"""
-function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
+function print_summary(lowest::Tour, timer::Float64, proc_timer::Float64, member::Array{Int64,1},
 						param::Dict{Symbol,Any}, tour_history::Array{Tuple{Float64, Array{Int64,1}, Int64},1}, cost_mat_read_time::Float64, instance_read_time::Float64, num_trials_feasible::Int64, num_trials::Int64, did_timeout::Bool)
   print_start_time = time_ns()
 	if param[:print_output] == 3 && !param[:timeout] && !param[:budget_met]
@@ -537,6 +537,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 			write(s, "Comment          : To avoid ~0.5sec startup time, use the Julia REPL\n")
 			write(s, "Host Computer    : ", gethostname(), "\n")
 			write(s, "Solver Time      : ", string(round(timer, digits=3)), " sec\n")
+			write(s, "Time in Process  : ", string(round(proc_timer, digits=3)), " sec\n")
 			write(s, "Cost Mat Rd Time : ", string(round(cost_mat_read_time, digits=3)), " sec\n")
 			write(s, "Instance Rd Time : ", string(round(instance_read_time, digits=3)), " sec\n")
 			write(s, "Timed out? : ", string(did_timeout), "\n")
@@ -552,7 +553,7 @@ function print_summary(lowest::Tour, timer::Float64, member::Array{Int64,1},
 		end
 	end
   print_end_time = time_ns()
-  # @printf("Writing summary file took %f s", round((print_end_time - print_start_time)/(1.0e9), digits=3))
+  # println("Writing summary file took ", round((print_end_time - print_start_time)/(1.0e9), digits=3), " s")
 end
 
 
