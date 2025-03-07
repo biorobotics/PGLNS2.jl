@@ -45,7 +45,14 @@ function remove_insert(current::Tour, best::Tour, dist::Array{Int64,2}, member::
 		randpdf_insertion!(trial.tour, sets_to_insert, dist, setdist, sets,
 							insertion.value, noise)
 	end
-	rand() < param[:prob_reopt] && opt_cycle!(trial, dist, sets, member, param, setdist, "partial")
+
+  if rand() < param[:prob_reopt]
+    opt_cycle!(trial, dist, sets, member, param, setdist, "partial")
+  else
+    trial.cost = tour_cost(trial.tour, dist)
+  end
+
+	# rand() < param[:prob_reopt] && opt_cycle!(trial, dist, sets, member, param, setdist, "partial")
 
 	# update power scores for remove and insert
 	score = 100 * max(current.cost - trial.cost, 0)/current.cost
