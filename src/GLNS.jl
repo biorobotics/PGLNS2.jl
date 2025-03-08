@@ -29,7 +29,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::Vector{Int64}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::Matrix{Int64}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String=""; args...)
+function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::Vector{Int64}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::Matrix{Int64}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String="", powers::Dict{String,Any}=Dict{String,Any}(); args...)
   # println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -88,7 +88,12 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
   start_proc_time = CPUtime_us()
 	# compute set distances which will be helpful
 	setdist = set_vertex_dist(dist, num_sets, membership)
-	powers = initialize_powers(param)
+
+  if length(powers) == 0
+    powers = initialize_powers(param)
+  else
+    power_update!(powers, param)
+  end
 
   tour_history = Array{Tuple{Float64, Array{Int64,1}, Int64},1}()
   num_trials_feasible = 0
@@ -108,11 +113,9 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 		# print_cold_trial(count, param, best)
 		phase = :early
 
-		if count[:cold_trial] == 1
-			powers = initialize_powers(param)
-		else
-			power_update!(powers, param)
-		end
+    if count[:cold_trial] > 1
+      power_update!(powers, param)
+    end
 
 		while count[:warm_trial] <= param[:warm_trials]
 			iter_count = 1
@@ -198,7 +201,7 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 					print_best(count, param, best, lowest, init_time)
           proc_timer = (CPUtime_us() - start_proc_time)/1e6
 					print_summary(lowest, timer, proc_timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, true)
-          return
+          return powers
 				end
 
 		    temperature *= cooling_rate  # cool the temperature
@@ -238,6 +241,7 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
   end
   proc_timer = (CPUtime_us() - start_proc_time)/1e6
   print_summary(lowest, timer, proc_timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, false)
+  return powers
 end
 
 function parse_cmd(ARGS)
