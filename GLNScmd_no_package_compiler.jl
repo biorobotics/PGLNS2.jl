@@ -100,10 +100,13 @@ end
 function main()
   problem_instance, optional_args = parse_cmd(ARGS)
   problem_instance = String(problem_instance)
+  num_vertices, num_sets, sets, _, membership = read_file(problem_instance)
+  npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
+  dist = npzread(npyfile)
 
 	output_file = get(optional_args, :output, "None")
   evaluated_edges = [(1, 2), (2, 1)]
-  GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, num_vertices, num_sets, sets, dist, membership, 0., 0., occursin("custom0", problem_instance), "perf0.txt"; optional_args...)
+  GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, 0., 0., occursin("custom0", problem_instance), "perf0.txt"; optional_args...)
   if output_file != "None"
     f = open(output_file, "w")
     write(f, "\n")
@@ -180,8 +183,8 @@ function main()
         end
       end
 
-      do_perf = occursin("custom0", problem_instance)
-      # do_perf = false
+      # do_perf = occursin("custom0", problem_instance)
+      do_perf = false
       perf_file = ""
       if do_perf
         msg = readline(client_socket)
