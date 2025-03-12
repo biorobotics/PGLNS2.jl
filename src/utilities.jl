@@ -73,7 +73,7 @@ struct Distsv
 end
 
 
-function set_vertex_dist(dist::Array{Int64, 2}, num_sets::Int, member::Array{Int64,1})
+function set_vertex_dist(dist::AbstractArray{Int64,2}, num_sets::Int, member::Array{Int64,1})
     """
 	Computes the minimum distance between each set and each vertex
 	Also compute the minimum distance from a set to a vertex, ignoring direction
@@ -107,7 +107,7 @@ end
 
 
 
-function set_vertex_distance(dist::Array{Int64, 2}, sets::Vector{Vector{Int64}})
+function set_vertex_distance(dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}})
     """
 	Computes the minimum distance between each set and each vertex
 	"""
@@ -172,7 +172,7 @@ end
 ###################################################
 ################ Tour checks ######################
 
-@inline function eval_edges!(tour::Tour, dist::Array{Int64,2}, confirmed_dist::Array{Bool,2}, client_socket::TCPSocket, setdist::Distsv, num_sets::Int, member::Array{Int64,1})
+@inline function eval_edges!(tour::Tour, dist::AbstractArray{Int64,2}, confirmed_dist::AbstractArray{Bool,2}, client_socket::TCPSocket, setdist::Distsv, num_sets::Int, member::Array{Int64,1})
     # Get unevaluated edges
     msg = ""
     unevaluated_edges = Array{Tuple{Int, Int}}(undef, 0)
@@ -204,7 +204,7 @@ end
 end
 
 """  Compute the length of a tour  """
-@inline function tour_cost(tour::Array{Int64,1}, dist::Array{Int64,2})
+@inline function tour_cost(tour::Array{Int64,1}, dist::AbstractArray{Int64,2})
     tour_length = dist[tour[end], tour[1]]
     @inbounds for i in 1:length(tour)-1
     	tour_length += dist[tour[i], tour[i+1]]

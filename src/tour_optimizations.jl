@@ -17,7 +17,7 @@
 Sequentially moves each vertex to its best point on the tour.
 Repeats until no more moves can be found
 """
-function moveopt!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Vector{Vector{Int64}}, 
+function moveopt!(tour::Array{Int64, 1}, dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}}, 
 				  member::Array{Int64,1}, setdist::Distsv)
     improvement_found = true
     number_of_moves = 0
@@ -47,7 +47,7 @@ function moveopt!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Vector{Vec
 end
 
 
-function moveopt_rand!(tour::Array{Int64, 1}, dist::Array{Int64, 2}, sets::Vector{Vector{Int64}}, 
+function moveopt_rand!(tour::Array{Int64, 1}, dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}}, 
 				  member::Array{Int64,1}, iters::Int, setdist::Distsv)
 	tour_inds = collect(1:length(tour))
 	@inbounds for i = 1:iters # i = rand(1:length(tour), iters)
@@ -68,7 +68,7 @@ end
 """
 compute the cost of inserting vertex v into position i of tour
 """
-@inline function insert_cost_lb(tour::Array{Int64,1}, dist::Array{Int64,2}, set::Array{Int64, 1}, setind::Int, 
+@inline function insert_cost_lb(tour::Array{Int64,1}, dist::AbstractArray{Int64,2}, set::Array{Int64, 1}, setind::Int, 
 						   setdist::Distsv, bestv::Int, bestpos::Int, best_cost::Int)
     @inbounds for i = 1:length(tour)
 		v1 = prev_tour(tour, i) # first check lower bound
@@ -91,7 +91,7 @@ end
 """
 determine the cost of removing the vertex at position i in the tour
 """
-@inline function removal_cost(tour::Array{Int64, 1}, dist::Array{Int64, 2}, i::Int64)
+@inline function removal_cost(tour::Array{Int64, 1}, dist::AbstractArray{Int64,2}, i::Int64)
     if i == 1
         return dist[tour[end], tour[i]] + dist[tour[i], tour[i+1]] - dist[tour[end], tour[i+1]]
     elseif i == length(tour)
@@ -103,7 +103,7 @@ end
 
 
 """ repeatedly perform moveopt and reopt_tour until there is no improvement """
-function opt_cycle!(current::Tour, dist::Array{Int64,2}, sets::Vector{Vector{Int64}}, 
+function opt_cycle!(current::Tour, dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}}, 
 					member::Array{Int64,1}, param::Dict{Symbol, Any}, setdist::Distsv, use)
 	current.cost = tour_cost(current.tour, dist)
 	prev_cost = current.cost
@@ -128,7 +128,7 @@ end
 Given an ordering of the sets, this alg performs BFS to find the 
 optimal vertex in each set
 """
-function reopt_tour(tour::Array{Int64,1}, dist::Array{Int64,2}, sets::Vector{Vector{Int64}}, 
+function reopt_tour(tour::Array{Int64,1}, dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}}, 
 					member::Array{Int64,1}, param::Dict{Symbol, Any})
     best_tour_cost = tour_cost(tour, dist)
 	new_tour = copy(tour)
@@ -182,7 +182,7 @@ end
 outputs the new cost and prev for vertex v2 after relaxing
 does not actually update the cost
 """
-@inline function relax(cost::Array{Int64, 1}, dist::Array{Int64, 2}, set1::Array{Int64, 1}, v2::Int64)
+@inline function relax(cost::Array{Int64, 1}, dist::AbstractArray{Int64,2}, set1::Array{Int64, 1}, v2::Int64)
 	v1 = set1[1]
 	min_cost = cost[v1] + dist[v1, v2]
 	min_prev = v1
@@ -200,7 +200,7 @@ end
 """
 relaxes the cost of each vertex in the set set2 in-place.
 """
-@inline function relax_in!(cost::Array{Int64, 1}, dist::Array{Int64, 2}, prev::Array{Int64, 1}, 
+@inline function relax_in!(cost::Array{Int64, 1}, dist::AbstractArray{Int64,2}, prev::Array{Int64, 1}, 
 				 set1::Array{Int64, 1}, set2::Array{Int64, 1})
 	@inbounds for v2 in set2
 		v1 = set1[1]

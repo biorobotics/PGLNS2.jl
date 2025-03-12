@@ -29,7 +29,7 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::Vector{Int64}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::Matrix{Int64}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String="", powers::Dict{String,Any}=Dict{String,Any}(); args...)
+function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::AbstractArray{Int64,1}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::AbstractArray{Int64,2}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String="", powers::Dict{String,Any}=Dict{String,Any}(); args...)
   # println("This is a fork of GLNS allowing for lazy edge evaluation")
   Random.seed!(1234)
 
@@ -299,7 +299,7 @@ function parse_cmd(ARGS)
 	return filename, optional_args
 end
 
-function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::Vector{Int64}, do_perf::Bool, perf_file::String, dist::Matrix{Int64})
+function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, do_perf::Bool, perf_file::String, dist::AbstractArray{Int64,2})
   start_time_for_tour_history = time_ns()
   problem_instance, optional_args = parse_cmd(args)
   problem_instance = String(problem_instance)
