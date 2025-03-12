@@ -3,6 +3,9 @@ import time
 import os
 import numpy as np
 import psutil
+import sys
+sys.path.append(os.path.expanduser("~/catkin_ws/src/mapf/scripts/"))
+from solve_gtsp_glkh import solve_gtsp_glns_lazy_edge_eval
 
 def proc_fn(i):
   bt = time.perf_counter()
@@ -10,6 +13,22 @@ def proc_fn(i):
   from juliacall import convert
   at = time.perf_counter()
   print(at - bt)
+
+  # If we're not using a sysimage. Results in ~0.07% compilation time even after solving the dummy GTSP below.
+  # Pkg activate and import run pretty fast, though
+  # jl.seval("import Pkg")
+  # jl.seval('Pkg.activate(expanduser("~/GLNS_lazy_edge_eval.jl"))')
+  # jl.seval("import GLNS")
+
+  # Despite using a sysimage, something is still getting compiled at runtime, and I'm not sure what. Solve this dummy GTSP to trigger remaining compilation
+  gtsp_cost_mat = np.array([[0, 1], [1, 0]])
+  solve_gtsp_glns_lazy_edge_eval(gtsp_cost_mat, [[0], [1]], file_suffix=str(0))
+  ARGS = [os.path.expanduser("~/GLKH-1.1/GTSPLIB/custom" + str(0) + ".gtsp"), "-output=custom.tour", "-socket_port=65432", "-lazy_edge_eval=0", "-new_socket_each_instance=0", "-verbose=3", "-mode=fast"]
+  problem_instance = ARGS[0]
+  npyfile = problem_instance[:-len(".gtsp")] + ".npy"
+  dist = np.load(npyfile).astype(int)
+  ARGS_jl = convert(jl.Vector[jl.String], ARGS)
+  jl.GLNS.main(ARGS_jl, 10., 298309430, np.array([1, 2]), False, "", np.asfortranarray(dist))
 
   instance_folder = "debug"
   i = 0
@@ -22,9 +41,13 @@ def proc_fn(i):
   dist = np.load(npyfile).astype(int)
 
   ARGS_jl = convert(jl.Vector[jl.String], ARGS)
-  jl.GLNS.main(ARGS_jl, 10., 298309430, given_initial_tours, False, "", dist)
 
-num_proc = psutil.cpu_count(logical=False)
+  bt = time.perf_counter()
+  jl.GLNS.main(ARGS_jl, 10., 298309430, given_initial_tours, False, "", np.asfortranarray(dist))
+  at = time.perf_counter()
+  print(at - bt)
+
+num_proc = 8 # psutil.cpu_count(logical=False)
 
 procs = []
 for proc_idx in range(num_proc):
