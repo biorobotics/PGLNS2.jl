@@ -324,8 +324,11 @@ function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_ini
 
   cost_mat_read_time = 0.
 
-  GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
-  # println("solver function runtime: ", timing_result.time, " solver function compile time: ", timing_result.compile_time)
+  timing_result = @timed GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
+  if get(optional_args, :verbose, 0) == 3
+    println("Compile time: ", timing_result.compile_time)
+  end
+  return timing_result.value
 end
 
 end
