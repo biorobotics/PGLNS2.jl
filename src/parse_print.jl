@@ -33,7 +33,7 @@ Note: the line 5 1 8 9 10 11 shows that the second set contains 5 vertices:
 TSPLIB Parser defined by:
   http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/TSPFAQ.html
 """
-function read_file(filename)
+function read_file(filename, read_dist)
 	  if !isfile(filename)
 		    error("the problem instance  ", filename, " does not exist")
 	  end
@@ -80,7 +80,9 @@ function read_file(filename)
             elseif occursin(r"^\s*TYPE\s*:\s*\w+\s*$", uppercase(line))
             elseif occursin(r"^\s*DIMENSION\s*:\s*\d+\s*$", uppercase(line))
                 num_vertices = parse(Int64, value)
-                dist = zeros(Int64, num_vertices, num_vertices)
+                if read_dist
+                  dist = zeros(Int64, num_vertices, num_vertices)
+                end
             elseif occursin(r"^\s*GTSP_SETS\s*:\s*\d+\s*$", uppercase(line))
                 num_sets = parse(Int64, value)
             elseif occursin(r"^\s*EDGE_WEIGHT_TYPE\s*:\s*\w+\s*$", uppercase(line))
@@ -191,7 +193,9 @@ function read_file(filename)
             if occursin(r"^\s*N\s*:\s*\w+", uppercase(line))
                 value = strip(split(strip(line),":")[end])
                 num_vertices = parse(Int64, value)
-                dist = zeros(Int64, num_vertices, num_vertices)
+                if read_dist
+                  dist = zeros(Int64, num_vertices, num_vertices)
+                end
             elseif occursin(r"^\s*M\s*:\s*\d+\s*$", uppercase(line))
                 value = strip(split(strip(line),":")[end])
                 num_sets = parse(Int64, value)

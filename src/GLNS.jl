@@ -317,7 +317,7 @@ function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_ini
   open_tsp = false
 
   read_start_time = time_ns()
-  num_vertices, num_sets, sets, _, membership = read_file(problem_instance)
+  num_vertices, num_sets, sets, _, membership = read_file(problem_instance, size(dist, 1) == 0)
   read_end_time = time_ns()
   instance_read_time = (read_end_time - read_start_time)/1.0e9
   # println("Reading GTSPLIB file took ", instance_read_time, " s")
