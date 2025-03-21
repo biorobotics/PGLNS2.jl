@@ -299,7 +299,7 @@ function parse_cmd(ARGS)
 	return filename, optional_args
 end
 
-function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, do_perf::Bool, perf_file::String, dist::AbstractArray{Int64,2})
+function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, do_perf::Bool, perf_file::String, dist::AbstractArray{Int64,2}, call_gc::Bool)
   start_time_for_tour_history = time_ns()
   problem_instance, optional_args = parse_cmd(args)
   problem_instance = String(problem_instance)
@@ -324,6 +324,9 @@ function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_ini
 
   cost_mat_read_time = 0.
 
+  if call_gc
+    GC.gc()
+  end
   timing_result = @timed GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
   if get(optional_args, :verbose, 0) == 3
     println("Compile time: ", timing_result.compile_time)

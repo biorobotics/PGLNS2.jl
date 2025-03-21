@@ -35,8 +35,11 @@ function main()
     dist = npzread(npyfile)
     inf_val = maximum(dist)
 
-    @time GLNS.main(ARGS, 10., inf_val, given_initial_tours, false, "", dist)
-    @time GLNS.main(ARGS, 10., inf_val, PyArray{Int64, 1, true, true, Int64}(given_initial_tours), false, "", PyArray{Int64, 2, true, true, Int64}(dist))
+    @time GLNS.main(ARGS, 10., inf_val, given_initial_tours, false, "", dist, false)
+    @time GLNS.main(ARGS, 10., inf_val, PyArray{Int64, 1, true, true, Int64}(given_initial_tours), false, "", PyArray{Int64, 2, true, true, Int64}(dist), false)
+
+    @time GLNS.main(ARGS, 10., inf_val, given_initial_tours, false, "", dist, true)
+    @time GLNS.main(ARGS, 10., inf_val, PyArray{Int64, 1, true, true, Int64}(given_initial_tours), false, "", PyArray{Int64, 2, true, true, Int64}(dist), true)
   end
 end
 
