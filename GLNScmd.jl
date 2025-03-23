@@ -129,7 +129,7 @@ function main()
       end
 
       read_start_time = time_ns()
-      num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+      num_vertices, num_sets, sets, dist, membership = read_file(problem_instance, false)
       read_end_time = time_ns()
       instance_read_time = (read_end_time - read_start_time)/1.0e9
       println("Reading GTSPLIB file took ", instance_read_time, " s")
