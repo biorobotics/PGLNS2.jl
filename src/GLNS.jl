@@ -269,7 +269,7 @@ function parse_cmd(ARGS)
 		exit(0)
 	end
 	int_flags = ["-max_time", "-trials", "-restarts", "-verbose", "-budget", "-socket_port", "-lazy_edge_eval", "-new_socket_each_instance"]
-	float_flags = ["-epsilon", "-reopt", "-num_iterations", "-latest_improvement"]
+	float_flags = ["-epsilon", "-reopt", "-num_iterations", "-latest_improvement", "-first_improvement"]
 	string_flags = ["-mode", "-output", "-noise", "-devel"]
 	filename = ""
 	optional_args = Dict{Symbol, Any}()
