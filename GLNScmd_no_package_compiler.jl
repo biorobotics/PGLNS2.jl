@@ -32,13 +32,8 @@ include("src/parse_print.jl")
 function main()
   problem_instance, optional_args = GLNS.parse_cmd(ARGS)
   problem_instance = String(problem_instance)
-  num_vertices, num_sets, sets, _, membership = read_file(problem_instance)
-  npyfile = first(problem_instance, length(problem_instance) - length(".gtsp")) * ".npy"
-  dist = npzread(npyfile)
 
 	output_file = get(optional_args, :output, "None")
-  evaluated_edges = [(1, 2), (2, 1)]
-  GLNS.solver(problem_instance, TCPSocket(), Vector{Int64}(), time_ns(), 9999, evaluated_edges, false, num_vertices, num_sets, sets, dist, membership, 0., 0., occursin("custom0", problem_instance), "perf0.txt"; optional_args...)
   if output_file != "None"
     f = open(output_file, "w")
     write(f, "\n")
@@ -63,12 +58,14 @@ function main()
 
   client_socket = accept(server)
 
+  powers = Dict{String,Any}()
   try
     iter_count = 0
     while true
       if iter_count != 0 && haskey(optional_args, Symbol("new_socket_each_instance")) && optional_args[Symbol("new_socket_each_instance")] == 1
         client_socket = accept(server)
       end
+      # GC.gc()
       msg = readline(client_socket)
       start_time_for_tour_history = time_ns()
       if msg == "terminate"
@@ -132,7 +129,7 @@ function main()
       end
 
       read_start_time = time_ns()
-      num_vertices, num_sets, sets, _, membership = read_file(problem_instance)
+      num_vertices, num_sets, sets, dist, membership = read_file(problem_instance, false)
       read_end_time = time_ns()
       instance_read_time = (read_end_time - read_start_time)/1.0e9
       println("Reading GTSPLIB file took ", instance_read_time, " s")
@@ -145,7 +142,9 @@ function main()
       cost_mat_read_time = (read_end_time - read_start_time)/1.0e9
       println("Reading cost mat file took ", cost_mat_read_time, " s")
 
-      GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
+      # powers = GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file, powers; optional_args...)
+      GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file, powers; optional_args...)
+      # GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...) # For GLNS_sockets.so
       #=
       timing_result = @timed GLNS.solver(problem_instance, client_socket, given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, sets, dist, membership, instance_read_time, cost_mat_read_time, do_perf, perf_file; optional_args...)
       println(timing_result)
