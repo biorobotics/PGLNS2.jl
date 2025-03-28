@@ -18,6 +18,8 @@ using Sockets
 using Printf
 using NPZ
 using CPUTime
+using ThreadPinning
+using Base.Threads
 include("utilities.jl")
 include("parse_print.jl")
 include("tour_optimizations.jl")
@@ -29,9 +31,11 @@ include("parameter_defaults.jl")
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
-function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::AbstractArray{Int64,1}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::AbstractArray{Int64,2}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String="", powers::Dict{String,Any}=Dict{String,Any}(); args...)
+function solver(problem_instance::String, client_socket::TCPSocket, given_initial_tours::AbstractArray{Int64,1}, start_time_for_tour_history::UInt64, inf_val::Int64, evaluated_edges::Vector{Tuple{Int64, Int64}}, open_tsp::Bool, num_vertices::Int64, num_sets::Int64, sets::Vector{Vector{Int64}}, dist::AbstractArray{Int64,2}, membership::Vector{Int64}, instance_read_time::Float64, cost_mat_read_time::Float64, run_perf::Bool=false, perf_file::String="", powers::Dict{String,Any}=Dict{String,Any}(), seed_rng::Bool=true; args...)
   # println("This is a fork of GLNS allowing for lazy edge evaluation")
-  Random.seed!(1234)
+  if seed_rng
+    Random.seed!(1234)
+  end
 
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
   if length(given_initial_tours) != 0
@@ -332,6 +336,51 @@ function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_ini
     println("Compile time: ", timing_result.compile_time)
   end
   return timing_result.value
+end
+
+function independent_multi_search(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, dist::AbstractArray{Int64,2}, call_gc::Bool)
+  nthreads = Threads.nthreads()
+  pinthreads(:cores)
+
+  start_time_for_tour_history = time_ns()
+  problem_instance, optional_args = parse_cmd(args)
+  problem_instance = String(problem_instance)
+
+	output_file = get(optional_args, :output, "None")
+  if output_file != "None"
+    f = open(output_file, "w")
+    write(f, "\n")
+    close(f)
+  end
+
+  optional_args[Symbol("max_time")] = max_time
+
+  evaluated_edges = Vector{Tuple{Int64, Int64}}()
+  open_tsp = false
+
+  read_start_time = time_ns()
+  num_vertices, num_sets, sets, _, membership = read_file(problem_instance, size(dist, 1) == 0)
+  read_end_time = time_ns()
+  instance_read_time = (read_end_time - read_start_time)/1.0e9
+  # println("Reading GTSPLIB file took ", instance_read_time, " s")
+
+  cost_mat_read_time = 0.
+
+  if call_gc
+    GC.gc()
+  end
+
+  # Need to make the copies here because thread 1 is going to start shuffling the sets once we enter the following for loop
+  set_copies_per_thread = cat([sets], [deepcopy(sets) for thread_idx=2:nthreads], dims=1)
+
+  # Don't seed within the solver function because that will make all threads generate the same solution
+  Random.seed!(1234);
+
+  @threads for thread_idx=1:nthreads
+    this_optional_args = deepcopy(optional_args)
+    this_optional_args[:output] = optional_args[:output][1:length(optional_args[:output]) - length(".tour")]*"_"*string(thread_idx)*".tour"
+    GLNS.solver(problem_instance, TCPSocket(), given_initial_tours, start_time_for_tour_history, inf_val, evaluated_edges, open_tsp, num_vertices, num_sets, set_copies_per_thread[thread_idx], dist, membership, instance_read_time, cost_mat_read_time, false, "", Dict{String,Any}(), false; this_optional_args...)
+  end
 end
 
 end
