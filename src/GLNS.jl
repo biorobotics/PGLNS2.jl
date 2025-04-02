@@ -303,7 +303,10 @@ function parse_cmd(ARGS)
 	return filename, optional_args
 end
 
-function main(args::Vector{String}, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, do_perf::Bool, perf_file::String, dist::AbstractArray{Int64,2}, call_gc::Bool)
+function main(args, max_time::Float64, inf_val::Int64, given_initial_tours::AbstractArray{Int64,1}, do_perf::Bool, perf_file::String, dist::AbstractArray{Int64,2}, call_gc::Bool)
+  if occursin("custom0", args[1])
+    println("Solving custom0.gtsp")
+  end
   start_time_for_tour_history = time_ns()
   problem_instance, optional_args = parse_cmd(args)
   problem_instance = String(problem_instance)
