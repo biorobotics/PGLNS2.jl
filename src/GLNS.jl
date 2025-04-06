@@ -103,7 +103,12 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
   num_trials_feasible = 0
   num_trials = 0
 
-	while count[:cold_trial] <= param[:cold_trials]
+  stop_upon_budget = param[:budget] != typemin(Int64)
+
+	while true
+    if count[:cold_trial] > param[:cold_trials] && !stop_upon_budget
+      break
+    end
 		# build tour from scratch on a cold restart
     if length(given_initial_tours) != 0
       start_idx = (count[:cold_trial] - 1)*num_sets + 1
@@ -190,7 +195,7 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 				# if we've come in under budget, or we're out of time, then exit
 			  if best.cost <= param[:budget] || time() - init_time > param[:max_time]
 					param[:timeout] = (time() - init_time > param[:max_time])
-					param[:budget_met] = (best.cost <= param[:budget])
+					param[:budget_met] = best.cost <= param[:budget]
 					timer = (time_ns() - start_time)/1.0e9
 					lowest.cost > best.cost && (lowest = best)
           if param[:output_file] != "None"
