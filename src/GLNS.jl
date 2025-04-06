@@ -110,7 +110,7 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
       end_idx = count[:cold_trial]*num_sets
       initial_tour = given_initial_tours[start_idx:end_idx]
     else
-      initial_tour = given_initial_tours
+      initial_tour = Vector{Int64}()
     end
     best = initial_tour!(lowest, dist, sets, setdist, count[:cold_trial], param, confirmed_dist, client_socket, num_sets, membership, initial_tour)
     timer = (time_ns() - start_time)/1.0e9
