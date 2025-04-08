@@ -231,6 +231,27 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 			count[:warm_trial] += 1
 			count[:latest_improvement] = 1
 			count[:first_improvement] = false
+
+      # if we've come in under budget, or we're out of time, then exit
+      if best.cost <= param[:budget] || time() - init_time > param[:max_time]
+        param[:timeout] = (time() - init_time > param[:max_time])
+        param[:budget_met] = best.cost <= param[:budget]
+        timer = (time_ns() - start_time)/1.0e9
+        lowest.cost > best.cost && (lowest = best)
+        if param[:output_file] != "None"
+          push!(tour_history, (round((time_ns() - start_time_for_tour_history)/1.0e9, digits=3), lowest.tour, lowest.cost))
+        end
+
+        if run_perf && occursin("custom0", problem_instance)
+          @assert(perf_pid != -1)
+          run(`kill -2 $perf_pid`)
+        end
+
+        print_best(count, param, best, lowest, init_time)
+        proc_timer = (CPUtime_us() - start_proc_time)/1e6
+        print_summary(lowest, timer, proc_timer, membership, param, tour_history, cost_mat_read_time, instance_read_time, num_trials_feasible, num_trials, true)
+        return powers
+      end
 		end
 		lowest.cost > best.cost && (lowest = best)
 		count[:warm_trial] = 0
