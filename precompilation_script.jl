@@ -39,8 +39,7 @@ function main()
 
     if i == 1
       # Handle the case where no initial tour is passed
-      @time GLNS.main(ARGS, 10., inf_val, Vector{Int64}(), false, "", dist, false)
-      @time GLNS.main(cat(ARGS, ["-init_tour=rand"], dims=1), 10., inf_val, Vector{Int64}(), false, "", dist, false)
+      @time GLNS.main(PyList{Any}(cat(ARGS, ["-budget="*string(inf_val - 1)], dims=1)), 10., inf_val, PyArray{Int64, 1, true, true, Int64}(Vector{Int64}()), false, "", PyArray{Int64, 2, true, true, Int64}(dist), false)
     end
 
     @time GLNS.main(ARGS, 10., inf_val, given_initial_tours, false, "", dist, false)
