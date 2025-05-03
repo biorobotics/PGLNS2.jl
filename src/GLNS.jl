@@ -37,6 +37,8 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
     Random.seed!(1234)
   end
 
+  CUDA.seed!(1234)
+
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
   if length(given_initial_tours) != 0
     @assert(length(given_initial_tours)%num_sets == 0)
@@ -93,6 +95,13 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 	# compute set distances which will be helpful
 	setdist = set_vertex_dist(dist, num_sets, membership)
 
+  device_dist = CUDA.CuArray(dist)
+  device_tour = CUDA.CuArray{Int64}(undef, num_sets)
+  max_set_size = sum([length(set) for set in sets])
+  device_set = CUDA.CuArray{Int64}(undef, max_set_size)
+  workArray = CUDA.CuArray{Int64}(undef, num_sets*max_set_size)
+  device_setdist = CuDistsv(setdist.set_vert, setdist.vert_set, setdist.min_sv)
+
   if length(powers) == 0
     powers = initialize_powers(param)
   else
@@ -144,7 +153,7 @@ function solver(problem_instance::String, client_socket::TCPSocket, given_initia
 				if iter_count > param[:num_iterations]/2 && phase == :early
 					phase = :mid  # move to mid phase after half iterations
 				end
-				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase)
+				trial = remove_insert(current, best, dist, membership, setdist, sets, powers, param, phase, device_tour, device_set, device_dist, device_setdist, workArray)
 
 				if trial.cost < best.cost
           if param[:lazy_edge_eval] == 1

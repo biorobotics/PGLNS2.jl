@@ -16,6 +16,8 @@
 #####################################################
 #########  GTSP Utilities ###########################
 
+import CUDA
+
 """ tour type that stores the order array and the length of the tour
 """
 mutable struct Tour
@@ -70,6 +72,12 @@ struct Distsv
 	set_vert::Array{Int64, 2}
 	vert_set::Array{Int64,2}
 	min_sv::Array{Int64, 2}
+end
+
+struct CuDistsv
+	set_vert::CUDA.CuArray{Int64, 2}
+	vert_set::CUDA.CuArray{Int64,2}
+	min_sv::CUDA.CuArray{Int64, 2}
 end
 
 
