@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import CUDA
+using Base.Threads
 
-# tour, dist, and set should be CuArrays, while setdist should be a CuDistsv, which stores CuArrays
-# workArray should be a CuArray of length num_sets*max_set_size, and each element should contain a random number
-function insert_lb_kernel(tour, dist, set, setind, setdist_vert_set, setdist_set_vert, noise, workArray, set_size, tour_length)
-  # Zero-based
-  query_idx = (CUDA.blockIdx().x - 1)*CUDA.blockDim().x + CUDA.threadIdx().x - 1
+# query_idx should be zero-based
+function insert_lb_kernel(tour, dist, set, setind, setdist_vert_set, setdist_set_vert, noise, workArray, query_idx, best_query_per_thread, best_cost_per_thread)
+  tour_length = length(tour)
+  set_size = length(set)
 
   # One-based
-  i = CUDA.div(query_idx, set_size) + 1
+  i = div(query_idx, set_size) + 1
   if i > tour_length
-    return
+    throw("i should not be larger than tour_length")
   end
 
   # One-based
@@ -37,10 +36,15 @@ function insert_lb_kernel(tour, dist, set, setind, setdist_vert_set, setdist_set
 
   # One-based
   query_idx += 1
-  # I'd just call CUDA.rand() here instead of populating random numbers into workArray,
-  # but I keep getting errors when trying to use CUDA.rand()
-  noise > 0.0 && (insert_cost += CUDA.round(Int64, noise * reinterpret(Float64, workArray[query_idx]) * CUDA.abs(insert_cost)))
-  workArray[query_idx] = insert_cost
+  noise > 0.0 && (insert_cost += round(Int64, noise * rand() * CUDA.abs(insert_cost)))
+  # workArray[query_idx] = insert_cost
+
+  # Need to use static scheduling for this!
+  if insert_cost < best_cost_per_thread[threadid()]
+    # Zero-based
+    best_query_per_thread[threadid()] = query_idx - 1
+    best_cost_per_thread[threadid()] = insert_cost
+  end
   return
 end
 
@@ -50,7 +54,7 @@ removal followed by insertion on tour.  Operation done in place.
 """
 function remove_insert(current::Tour, best::Tour, dist::AbstractArray{Int64,2}, member::Array{Int64,1},
 						setdist::Distsv, sets::Vector{Vector{Int64}},
-						powers, param::Dict{Symbol,Any}, phase::Symbol, device_tour::CUDA.CuArray{Int64,1}, device_set::CUDA.CuArray{Int64,1}, device_dist::CUDA.CuArray{Int64,2}, device_setdist::CuDistsv, workArray::CUDA.CuArray{Int64,1})
+						powers, param::Dict{Symbol,Any}, phase::Symbol, workArray::Vector{Int64})
 	# make a new tour to perform the insertion and deletion on
     trial = Tour(copy(current.tour), current.cost)
 	pivot_tour!(trial.tour)
@@ -75,7 +79,7 @@ function remove_insert(current::Tour, best::Tour, dist::AbstractArray{Int64,2}, 
 		cheapest_insertion!(trial.tour, sets_to_insert, dist, setdist, sets)
 	else
 		randpdf_insertion!(trial.tour, sets_to_insert, dist, setdist, sets,
-							insertion.value, noise, device_tour, device_set, device_dist, device_setdist, workArray)
+							insertion.value, noise, workArray)
 	end
 
   if rand() < param[:prob_reopt]
@@ -142,7 +146,7 @@ end
 """  choose set with pdf_select, and then insert in best place with noise  """
 function randpdf_insertion!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1},
 							dist::AbstractArray{Int64,2}, setdist::Distsv,
-							sets::Vector{Vector{Int64}}, power::Float64, noise::Power, device_tour::CUDA.CuArray{Int64,1}, device_set::CUDA.CuArray{Int64,1}, device_dist::CUDA.CuArray{Int64,2}, device_setdist::CuDistsv, workArray::CUDA.CuArray{Int64,1})
+							sets::Vector{Vector{Int64}}, power::Float64, noise::Power, workArray::Vector{Int64})
 
     mindist = [typemax(Int64) for i=1:length(sets_to_insert)]
     @inbounds for i = 1:length(sets_to_insert)
@@ -171,11 +175,9 @@ function randpdf_insertion!(tour::Array{Int64,1}, sets_to_insert::Array{Int64,1}
 			bestv, bestpos = insert_subset_lb(tour, dist, sets[nearest_set], nearest_set,
 											  setdist, noise.value)
 		else
-      copyto!(device_tour, tour)
-      copyto!(device_set, sets[nearest_set])
 			bestv, bestpos =
 					# insert_lb(tour, dist, sets[nearest_set], nearest_set, setdist, noise.value)
-					insert_lb_gpu(tour, sets[nearest_set], device_tour, device_dist, device_set, nearest_set, device_setdist, noise.value, workArray)
+					insert_lb_parallel(tour, dist, sets[nearest_set], nearest_set, setdist, noise.value, workArray)
 		end
         insert!(tour, bestpos, bestv)  # perform the insertion
         new_vertex_in_tour = bestv
@@ -244,19 +246,20 @@ best_position is i, then vertex should be inserted between tour[i-1] and tour[i]
     return bestv, bestpos
 end
 
-@inline function insert_lb_gpu(tour::Array{Int64,1}, set::Array{Int64,1}, device_tour::CUDA.CuArray{Int64,1}, device_dist::CUDA.CuArray{Int64,2}, device_set::CUDA.CuArray{Int64, 1},
-							setind::Int, device_setdist::CuDistsv, noise::Float64, workArray::CUDA.CuArray{Int64,1})
+@inline function insert_lb_parallel(tour::Array{Int64,1}, dist::AbstractArray{Int64,2}, set::Array{Int64, 1},
+							setind::Int, setdist::Distsv, noise::Float64, workArray::Vector{Int64})
   tour_length = length(tour)
   set_size = length(set)
 
-  num_threads = 512
   num_queries = tour_length*set_size
-  num_blocks = Int64(ceil(num_queries/num_threads))
-  CUDA.rand!(reinterpret(Float64, view(workArray, 1:num_queries)))
-  CUDA.@cuda threads=num_threads blocks=num_blocks insert_lb_kernel(device_tour, device_dist, device_set, setind, device_setdist.vert_set, device_setdist.set_vert, noise, workArray, set_size, tour_length)
-  CUDA.synchronize()
+  best_query_per_thread = zeros(Int64, nthreads())
+  best_cost_per_thread = typemax(Int64)*ones(Int64, nthreads())
+  @threads :static for query_idx=0:num_queries-1
+    insert_lb_kernel(tour, dist, set, setind, setdist.vert_set, setdist.set_vert, noise, workArray, query_idx, best_query_per_thread, best_cost_per_thread)
+  end
+  best_thread_idx = argmin(best_cost_per_thread)
   # Zero-based
-  query_idx = CUDA.argmin(view(workArray, 1:num_queries)) - 1
+  query_idx = best_query_per_thread[best_thread_idx]
 
   # One-based
   bestpos = div(query_idx, set_size) + 1

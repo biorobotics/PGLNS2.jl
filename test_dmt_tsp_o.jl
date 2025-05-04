@@ -16,7 +16,7 @@
 
 using Sockets
 import Pkg
-Pkg.activate(expanduser("~/GLNS_GPU.jl"))
+Pkg.activate(expanduser("~/PGLNS2.jl"))
 using GLNS
 using Printf
 using NPZ
