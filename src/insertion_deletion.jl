@@ -13,6 +13,7 @@
 # limitations under the License.
 
 using Base.Threads
+using Polyester: @batch
 
 # query_idx should be zero-based
 function insert_lb_kernel(tour, dist, set, setind, setdist_vert_set, setdist_set_vert, noise, workArray, query_idx, best_query_per_thread, best_cost_per_thread)
@@ -255,6 +256,7 @@ end
   best_query_per_thread = zeros(Int64, nthreads())
   best_cost_per_thread = typemax(Int64)*ones(Int64, nthreads())
   @threads :static for query_idx=0:num_queries-1
+  # @batch for query_idx=0:num_queries-1 # Polyester does static scheduling by default
     insert_lb_kernel(tour, dist, set, setind, setdist.vert_set, setdist.set_vert, noise, workArray, query_idx, best_query_per_thread, best_cost_per_thread)
   end
   best_thread_idx = argmin(best_cost_per_thread)

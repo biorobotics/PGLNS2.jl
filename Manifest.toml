@@ -29,6 +29,38 @@ weakdeps = ["SparseArrays", "StaticArrays"]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 version = "1.1.2"
 
+[[ArrayInterface]]
+deps = ["Adapt", "LinearAlgebra"]
+git-tree-sha1 = "017fcb757f8e921fb44ee063a7aafe5f89b86dd1"
+uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
+version = "7.18.0"
+
+    [ArrayInterface.extensions]
+    ArrayInterfaceBandedMatricesExt = "BandedMatrices"
+    ArrayInterfaceBlockBandedMatricesExt = "BlockBandedMatrices"
+    ArrayInterfaceCUDAExt = "CUDA"
+    ArrayInterfaceCUDSSExt = "CUDSS"
+    ArrayInterfaceChainRulesCoreExt = "ChainRulesCore"
+    ArrayInterfaceChainRulesExt = "ChainRules"
+    ArrayInterfaceGPUArraysCoreExt = "GPUArraysCore"
+    ArrayInterfaceReverseDiffExt = "ReverseDiff"
+    ArrayInterfaceSparseArraysExt = "SparseArrays"
+    ArrayInterfaceStaticArraysCoreExt = "StaticArraysCore"
+    ArrayInterfaceTrackerExt = "Tracker"
+
+    [ArrayInterface.weakdeps]
+    BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
+    BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
+    CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+    CUDSS = "45b445bb-4962-46a0-9369-b4df9d0f772e"
+    ChainRules = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
+    ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+    StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+    Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
+
 [[Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 version = "1.11.0"
@@ -61,10 +93,22 @@ version = "0.5.1"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
+[[BitTwiddlingConvenienceFunctions]]
+deps = ["Static"]
+git-tree-sha1 = "f21cfd4950cb9f0587d5067e69405ad2acd27b87"
+uuid = "62783981-4cbd-42fc-bca8-16325de8dc4b"
+version = "0.1.6"
+
 [[CEnum]]
 git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.5.0"
+
+[[CPUSummary]]
+deps = ["CpuId", "IfElse", "PrecompileTools", "Static"]
+git-tree-sha1 = "5a97e67919535d6841172016c9530fd69494e5ec"
+uuid = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+version = "0.2.6"
 
 [[CPUTime]]
 git-tree-sha1 = "2dcc50ea6a0a1ef6440d6eecd0fe3813e5671f45"
@@ -105,6 +149,12 @@ git-tree-sha1 = "99f1c6b659c14bbb3492246791bb4928a40ceb84"
 uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
 version = "0.16.1+0"
 
+[[CloseOpenIntervals]]
+deps = ["Static", "StaticArrayInterface"]
+git-tree-sha1 = "05ba0d07cd4fd8b7a39541e31a7b0254704ea581"
+uuid = "fb6a15b2-703c-40df-9091-08a04967cfa9"
+version = "0.1.13"
+
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
 git-tree-sha1 = "67e11ee83a43eb71ddc950302c53bf33f0690dfe"
@@ -123,6 +173,11 @@ git-tree-sha1 = "64e15186f0aa277e174aa81798f7eb8598e0157e"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.13.0"
 
+[[CommonWorldInvalidations]]
+git-tree-sha1 = "ae52d1c52048455e85a387fbee9be553ec2b68d0"
+uuid = "f70d9fcc-98c5-4d4a-abd7-e4cdeebd8ca8"
+version = "1.0.0"
+
 [[Compat]]
 deps = ["TOML", "UUIDs"]
 git-tree-sha1 = "8ae8d32e09f0dcf42a36b90d4e17f5dd2e4c4215"
@@ -137,6 +192,12 @@ weakdeps = ["Dates", "LinearAlgebra"]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.1+0"
+
+[[CpuId]]
+deps = ["Markdown"]
+git-tree-sha1 = "fcbb72b032692610bfbdb15018ac16a36cf2e406"
+uuid = "adafc99b-e345-5852-983c-f28acb93d879"
+version = "0.3.1"
 
 [[Crayons]]
 git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
@@ -259,6 +320,11 @@ git-tree-sha1 = "f93a9ce66cd89c9ba7a4695a47fd93b4c6bc59fa"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
 version = "2.12.0+0"
 
+[[IfElse]]
+git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
+uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
+version = "0.1.1"
+
 [[InlineStrings]]
 git-tree-sha1 = "6a9fde685a7ac1eb3495f8e812c5a7c3711c2d5e"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
@@ -341,6 +407,12 @@ git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
 uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.4.0"
 
+[[LayoutPointers]]
+deps = ["ArrayInterface", "LinearAlgebra", "ManualMemory", "SIMDTypes", "Static", "StaticArrayInterface"]
+git-tree-sha1 = "a9eaadb366f5493a5654e843864c13d8b107548c"
+uuid = "10f19ff3-798f-405d-979b-55457f8fc047"
+version = "0.1.17"
+
 [[LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
@@ -394,6 +466,11 @@ version = "1.11.0"
 git-tree-sha1 = "1e0228a030642014fe5cfe68c2c0a818f9e3f522"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.16"
+
+[[ManualMemory]]
+git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
+uuid = "d125e4d3-2237-4719-b19c-fa641b8a4667"
+version = "0.1.8"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -462,6 +539,18 @@ version = "1.11.0"
     [Pkg.weakdeps]
     REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
+[[Polyester]]
+deps = ["ArrayInterface", "BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "ManualMemory", "PolyesterWeave", "Static", "StaticArrayInterface", "StrideArraysCore", "ThreadingUtilities"]
+git-tree-sha1 = "6d38fea02d983051776a856b7df75b30cf9a3c1f"
+uuid = "f517fe37-dbe3-4b94-8317-1923a5111588"
+version = "0.7.16"
+
+[[PolyesterWeave]]
+deps = ["BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "Static", "ThreadingUtilities"]
+git-tree-sha1 = "645bed98cd47f72f67316fd42fc47dee771aefcd"
+uuid = "1d0040c9-8b98-4ee7-8388-3f51789ca0ad"
+version = "0.2.2"
+
 [[PooledArrays]]
 deps = ["DataAPI", "Future"]
 git-tree-sha1 = "36d8b4b899628fb92c2749eb488d884a926614d3"
@@ -523,6 +612,11 @@ version = "1.3.0"
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
 
+[[SIMDTypes]]
+git-tree-sha1 = "330289636fb8107c5f32088d2741e9fd7a061a5c"
+uuid = "94e857df-77ce-4151-89e5-788b33177be4"
+version = "0.1.0"
+
 [[ScopedValues]]
 deps = ["HashArrayMappedTries", "Logging"]
 git-tree-sha1 = "1147f140b4c8ddab224c94efa9569fc23d63ab44"
@@ -565,6 +659,26 @@ git-tree-sha1 = "c4f6610f85cb965bee5bfafa64cbeeda55a4e0b2"
 uuid = "91464d47-22a1-43fe-8b7f-2d57ee82463f"
 version = "0.1.7"
 
+[[Static]]
+deps = ["CommonWorldInvalidations", "IfElse", "PrecompileTools"]
+git-tree-sha1 = "f737d444cb0ad07e61b3c1bef8eb91203c321eff"
+uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
+version = "1.2.0"
+
+[[StaticArrayInterface]]
+deps = ["ArrayInterface", "Compat", "IfElse", "LinearAlgebra", "PrecompileTools", "Static"]
+git-tree-sha1 = "96381d50f1ce85f2663584c8e886a6ca97e60554"
+uuid = "0d7ed370-da01-4f52-bd93-41d350b8b718"
+version = "1.8.0"
+
+    [StaticArrayInterface.extensions]
+    StaticArrayInterfaceOffsetArraysExt = "OffsetArrays"
+    StaticArrayInterfaceStaticArraysExt = "StaticArrays"
+
+    [StaticArrayInterface.weakdeps]
+    OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
+    StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
 [[StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
 git-tree-sha1 = "0feb6b9031bd5c51f9072393eb5ab3efd31bf9e4"
@@ -593,6 +707,12 @@ weakdeps = ["SparseArrays"]
 
     [Statistics.extensions]
     SparseArraysExt = ["SparseArrays"]
+
+[[StrideArraysCore]]
+deps = ["ArrayInterface", "CloseOpenIntervals", "IfElse", "LayoutPointers", "LinearAlgebra", "ManualMemory", "SIMDTypes", "Static", "StaticArrayInterface", "ThreadingUtilities"]
+git-tree-sha1 = "f35f6ab602df8413a50c4a25ca14de821e8605fb"
+uuid = "7792a7ef-975c-4747-a70f-980b88e8d1da"
+version = "0.5.7"
 
 [[StringManipulation]]
 deps = ["PrecompileTools"]
@@ -657,6 +777,12 @@ deps = ["LinearAlgebra", "PrecompileTools", "StableTasks"]
 git-tree-sha1 = "bb3c6f3b5600fbff028c43348365681b34d06499"
 uuid = "6f48bc29-05ce-4cc8-baad-4adcba581a18"
 version = "0.4.5"
+
+[[ThreadingUtilities]]
+deps = ["ManualMemory"]
+git-tree-sha1 = "18ad3613e129312fe67789a71720c3747e598a61"
+uuid = "8290d209-cae3-49c0-8002-c8c24d57dab5"
+version = "0.5.3"
 
 [[Tracy]]
 deps = ["ExprTools", "LibTracyClient_jll", "Libdl"]
