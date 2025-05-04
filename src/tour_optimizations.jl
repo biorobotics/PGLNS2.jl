@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+using Base.Threads
 
 """
 Sequentially moves each vertex to its best point on the tour.
@@ -130,25 +131,25 @@ optimal vertex in each set
 """
 function reopt_tour(tour::Array{Int64,1}, dist::AbstractArray{Int64,2}, sets::Vector{Vector{Int64}}, 
 					member::Array{Int64,1}, param::Dict{Symbol, Any})
-    best_tour_cost = tour_cost(tour, dist)
-	new_tour = copy(tour)
-	min_index = min_setv(tour, sets, member, param)	
-    tour = [tour[min_index:end]; tour[1:min_index-1]]
+  best_tour_cost = tour_cost(tour, dist)
+  new_tour = copy(tour)
+  min_index = min_setv(tour, sets, member, param)	
+  tour = [tour[min_index:end]; tour[1:min_index-1]]
 
-    prev = zeros(Int64, param[:num_vertices])   # initialize cost_to_come
-    cost_to_come = zeros(Int64, param[:num_vertices])
-    @inbounds for start_vertex in sets[member[tour[1]]]
- 		relax_in!(cost_to_come, dist, prev, Int64[start_vertex], sets[member[tour[2]]])
-        for i = 3:length(tour)  # cost to get to ith set on path through (i-1)th set
-            relax_in!(cost_to_come, dist, prev, sets[member[tour[i-1]]], sets[member[tour[i]]])
-        end
-        # find the cost back to the start vertex.
-        tour_cost, start_prev = relax(cost_to_come, dist, sets[member[tour[end]]], start_vertex)
-        if tour_cost < best_tour_cost   # reconstruct the path
-			best_tour_cost = tour_cost
-            new_tour = extract_tour(prev, start_vertex, start_prev)
-        end
+  prev = zeros(Int64, param[:num_vertices])   # initialize cost_to_come
+  cost_to_come = zeros(Int64, param[:num_vertices])
+  @inbounds for start_vertex in sets[member[tour[1]]]
+    relax_in!(cost_to_come, dist, prev, Int64[start_vertex], sets[member[tour[2]]])
+    for i = 3:length(tour)  # cost to get to ith set on path through (i-1)th set
+      relax_in!(cost_to_come, dist, prev, sets[member[tour[i-1]]], sets[member[tour[i]]])
     end
+    # find the cost back to the start vertex.
+    tour_cost, start_prev = relax(cost_to_come, dist, sets[member[tour[end]]], start_vertex)
+    if tour_cost < best_tour_cost   # reconstruct the path
+      best_tour_cost = tour_cost
+      new_tour = extract_tour(prev, start_vertex, start_prev)
+    end
+  end
 	return new_tour
 end
 
@@ -186,14 +187,14 @@ does not actually update the cost
 	v1 = set1[1]
 	min_cost = cost[v1] + dist[v1, v2]
 	min_prev = v1
-    @inbounds for i = 2:length(set1)
-		v1 = set1[i]
-		newcost = cost[v1] + dist[v1, v2]
-        if min_cost > newcost
-            min_cost, min_prev = newcost, v1
-        end
+  @inbounds for i = 2:length(set1)
+    v1 = set1[i]
+    newcost = cost[v1] + dist[v1, v2]
+    if min_cost > newcost
+      min_cost, min_prev = newcost, v1
     end
-    return min_cost, min_prev
+  end
+  return min_cost, min_prev
 end
 
 
@@ -202,16 +203,20 @@ relaxes the cost of each vertex in the set set2 in-place.
 """
 @inline function relax_in!(cost::Array{Int64, 1}, dist::AbstractArray{Int64,2}, prev::Array{Int64, 1}, 
 				 set1::Array{Int64, 1}, set2::Array{Int64, 1})
+  # Tried multithreading this loop, ran 2x slower
+	# @inbounds @threads for v2 in set2
 	@inbounds for v2 in set2
+    # At the end of this iteration, cost[v2] contains the optimal cost to come to v2, and prev[v2]
+    # stores the backpointer
 		v1 = set1[1]
 		cost[v2] = cost[v1] + dist[v1, v2]
 		prev[v2] = v1
-        for i = 2:length(set1)
+    for i = 2:length(set1)
 			v1 = set1[i]
 			newcost = cost[v1] + dist[v1, v2]
-            if cost[v2] > newcost
+      if cost[v2] > newcost
 				cost[v2], prev[v2] = newcost, v1
-            end
-        end
+      end
     end
+  end
 end
